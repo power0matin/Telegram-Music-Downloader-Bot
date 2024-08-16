@@ -24,7 +24,7 @@
 
 ```bash
 git clone https://github.com/yourusername/telegram-music-downloader-bot.git
-cd telegram-music-downloader-bot
+cd telegram-music-downloader-bot```
 
 
 ### 2. نصب وابستگی‌
