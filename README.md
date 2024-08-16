@@ -106,7 +106,7 @@ git push origin feature-branch
 
 ## مشکلات و مشارکت
 
-برای گزارش مشکلات یا پیشنهادات به [Issues](https://github.com/yourusername/telegram-music-downloader-bot/issues) بروید. اگر می‌خواهید به توسعه ربات کمک کنید، لطفاً یک [Pull Request](https://github.com/yourusername/telegram-music-downloader-bot/pulls) ارسال کنید.
+برای گزارش مشکلات یا پیشنهادات به [Issues](https://github.com/power0matin/telegram-music-downloader-bot/issues) بروید. اگر می‌خواهید به توسعه ربات کمک کنید، لطفاً یک [Pull Request](https://github.com/power0matin/telegram-music-downloader-bot/pulls) ارسال کنید.
 
 ## لایسنس
 
