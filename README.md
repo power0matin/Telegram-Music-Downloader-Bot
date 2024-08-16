@@ -27,16 +27,6 @@ git clone https://github.com/yourusername/telegram-music-downloader-bot.git
 cd telegram-music-downloader-bot
 ```
 
-## نصب
-
-### 1. کلون کردن مخزن
-
-برای شروع، مخزن را از GitHub کلون کنید:
-
-```bash
-git clone https://github.com/yourusername/telegram-music-downloader-bot.git
-cd telegram-music-downloader-bot
-```
 
 ### 2. نصب وابستگی‌ها
 
