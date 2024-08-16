@@ -1,0 +1,2 @@
+pyTelegramBotAPI==4.11.1
+spotdl==3.0.3
