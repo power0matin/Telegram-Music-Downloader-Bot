@@ -20,8 +20,8 @@ To run this bot, you need to install the following tools:
    To get started, clone the repository from GitHub:
 
 ```bash
-   git clone https://github.com/yourusername/yourrepository.git
-   cd yourrepository
+git clone https://github.com/yourusername/yourrepository.git
+cd yourrepository
 ```
 Install Dependencies
 Install the required dependencies using pip:
