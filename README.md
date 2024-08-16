@@ -25,3 +25,11 @@
 ```bash
 git clone https://github.com/yourusername/telegram-music-downloader-bot.git
 cd telegram-music-downloader-bot
+
+
+### 2. نصب وابستگی‌
+پیش‌نیازها را با استفاده از pip نصب کنید:
+
+```bash
+Copy code
+pip install -r requirements.txt
