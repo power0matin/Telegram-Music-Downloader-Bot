@@ -27,9 +27,10 @@
 
 برای شروع، مخزن را از GitHub کلون کنید:
 
-bash
+```bash
 git clone https://github.com/yourusername/telegram-music-downloader-bot.git
 cd telegram-music-downloader-bot
+```
 
 
 
@@ -37,8 +38,9 @@ cd telegram-music-downloader-bot
 
 پیش‌نیازها را با استفاده از pip نصب کنید:
 
-bash
+```bash
 pip install -r requirements.txt
+```
 
 
 ### 3. پیکربندی
@@ -47,8 +49,9 @@ pip install -r requirements.txt
 
 در فایل config.py، توکن بات تلگرام خود را اضافه کنید:
 
-python
+```python
 BOT_TOKEN = 'YOUR_BOT_TOKEN'
+```
 
 
 #### ب) تنظیمات SpotDL
@@ -61,9 +64,9 @@ BOT_TOKEN = 'YOUR_BOT_TOKEN'
 
 برای اجرای ربات، از دستور زیر استفاده کنید:
 
-bash
+```bash
 python main.py
-
+```
 
 ### 2. استفاده از ربات
 
