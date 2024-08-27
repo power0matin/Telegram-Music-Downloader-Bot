@@ -79,4 +79,3 @@ python main.py
 ## لایسنس
 
 این پروژه تحت [MIT License](LICENSE) منتشر شده است.
-```
