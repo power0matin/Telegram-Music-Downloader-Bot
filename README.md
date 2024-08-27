@@ -24,7 +24,7 @@
 
 برای شروع، مخزن را از GitHub کلون کنید:
 
-```bash
+```python
 git clone https://github.com/yourusername/telegram-music-downloader-bot.git
 cd telegram-music-downloader-bot
 ```
@@ -33,7 +33,7 @@ cd telegram-music-downloader-bot
 
 پیش‌نیازها را با استفاده از `pip` نصب کنید:
 
-```bash
+```python
 pip install -r requirements.txt
 ```
 
@@ -57,7 +57,7 @@ BOT_TOKEN = 'YOUR_BOT_TOKEN'
 
 برای اجرای ربات، از دستور زیر استفاده کنید:
 
-```bash
+```python
 python main.py
 ```
 
