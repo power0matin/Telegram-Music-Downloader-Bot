@@ -3,7 +3,8 @@
   <h1>Welcome to the Telegram Music Downloader Bot</h1>
 </div>
 
-## For [English (US)](README.en.md) Click
+## [Click Here for English (US)](README.en.md)
+
 
 این پروژه شامل یک ربات تلگرام است که به کاربران این امکان را می‌دهد تا آهنگ‌ها، آلبوم‌ها و پلی‌لیست‌ها را از اسپاتیفای دانلود کنند. کاربران می‌توانند با ارسال لینک اسپاتیفای به ربات، آهنگ‌های خود را با کیفیت‌های مختلف (128 kbps و 320 kbps) دریافت کنند.
 
