@@ -30,7 +30,7 @@ To run this bot, make sure you have the following installed:
 
 3. **Configuration**
    a) **Set Up Telegram Bot Token:**  
-      Obtain your Telegram bot token from the [BotFather](https://core.telegram.org/bots#botfather) on Telegram and add it to the `config.py` file:
+      Obtain your Telegram bot token from the [BotFather](https://core.telegram.org/bots#botfather) on Telegram and add it to the `main.py` file:
       ```python
       BOT_TOKEN = 'YOUR_BOT_TOKEN'
       ```
