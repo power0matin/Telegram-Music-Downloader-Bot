@@ -48,7 +48,7 @@ pip install -r requirements.txt
 
 #### الف) تنظیم توکن بات تلگرام
 
-در فایل config.py، توکن بات تلگرام خود را اضافه کنید:
+در فایل main.py، توکن بات تلگرام خود را اضافه کنید:
 
 ```python
 BOT_TOKEN = 'YOUR_BOT_TOKEN'
