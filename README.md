@@ -1,85 +1,70 @@
-<!-- HTML برای وسط‌چین کردن متن -->
+
 <div style="text-align: center;">
   <h1>Welcome to the Telegram Music Downloader Bot</h1>
 </div>
 
-## [Click Here for English (US)](README.en.md)
+## [برای مشاهده به زبان فارسی کلیک کنید](README.fa.md)
 
+This project is a Telegram bot that allows users to download music directly from Spotify by sending a Spotify link to the bot. It supports downloading songs, albums, and playlists in different quality formats (128 kbps and 320 kbps).
 
-این پروژه شامل یک ربات تلگرام است که به کاربران این امکان را می‌دهد تا آهنگ‌ها، آلبوم‌ها و پلی‌لیست‌ها را از اسپاتیفای دانلود کنند. کاربران می‌توانند با ارسال لینک اسپاتیفای به ربات، آهنگ‌های خود را با کیفیت‌های مختلف (128 kbps و 320 kbps) دریافت کنند.
+## Features
+- Download songs, albums, and playlists from Spotify.
+- Choose download quality (128 kbps or 320 kbps).
+- Automatically send downloaded music files to users via Telegram.
 
-## ویژگی‌ها
+## Prerequisites
+To run this bot, make sure you have the following installed:
+1. **Python 3.7+**
+2. **SpotDL** - A tool to download music from Spotify.
+3. **python-telegram-bot** - A Python library to interact with the Telegram API.
 
-- **دانلود آهنگ‌ها، آلبوم‌ها و پلی‌لیست‌ها**: از اسپاتیفای با کیفیت‌های مختلف.
-- **انتخاب کیفیت دانلود**: 128 kbps یا 320 kbps.
-- **ارسال فایل‌های دانلود شده**: به کاربران از طریق تلگرام.
+## Installation
 
-## پیش‌نیازها
+1. **Clone the Repository**
+   Start by cloning the repository to your local machine:
+   ```bash
+   git clone https://github.com/yourusername/yourrepository.git
+   cd yourrepository
+   ```
 
-برای اجرای این ربات، نیاز به نصب ابزارهای زیر است:
+2. **Install Dependencies**
+   Install the necessary dependencies using pip:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-- **Python 3.7+**: نسخه‌ای از Python برای اجرای کد.
-- **SpotDL**: برای دانلود آهنگ‌ها از اسپاتیفای.
-- **python-telegram-bot**: برای تعامل با API تلگرام.
+3. **Configuration**
+   a) **Set Up Telegram Bot Token:**  
+      Obtain your Telegram bot token from the [BotFather](https://core.telegram.org/bots#botfather) on Telegram and add it to the `main.py` file:
+      ```python
+      BOT_TOKEN = 'YOUR_BOT_TOKEN'
+      ```
 
-## نصب
+   b) **SpotDL Configuration:**  
+      Ensure SpotDL is correctly installed and configured. Follow the [SpotDL documentation](https://spotdl.readthedocs.io/) for any additional setup if needed.
 
-### 1. کلون کردن مخزن
+## Usage
 
-برای شروع، مخزن را از GitHub کلون کنید:
+1. **Run the Bot**
+   Start the bot by running:
+   ```bash
+   python main.py
+   ```
 
-```bash
-git clone https://github.com/yourusername/telegram-music-downloader-bot.git
-cd telegram-music-downloader-bot
-```
+2. **Using the Bot**
+   - **Start:** Send `/start` to the bot to receive initial instructions.
+   - **Send Link:** Send a Spotify link (song, album, or playlist) to the bot.
+   - **Choose Quality:** After sending the link, the bot will prompt you to choose the download quality (128 kbps or 320 kbps).
+   - **Receive File:** Once you select the quality, the bot will download and send the MP3 file to you.
 
+## Issues and Contributions
 
+If you encounter any issues or have suggestions, feel free to open an issue in the [Issues section](https://github.com/yourusername/yourrepository/issues). Contributions are welcome! If you'd like to contribute, please submit a pull request following the contribution guidelines.
 
-### 2. نصب وابستگی‌ها
+## License
 
-پیش‌نیازها را با استفاده از pip نصب کنید:
+This project is licensed under the [MIT License](LICENSE).
 
-```bash
-pip install -r requirements.txt
-```
+---
 
-
-### 3. پیکربندی
-
-#### الف) تنظیم توکن بات تلگرام
-
-در فایل main.py، توکن بات تلگرام خود را اضافه کنید:
-
-```python
-BOT_TOKEN = 'YOUR_BOT_TOKEN'
-```
-
-
-#### ب) تنظیمات SpotDL
-
-اطمینان حاصل کنید که SpotDL به درستی نصب شده است و به پیکربندی‌های پیش‌فرض نیاز ندارد.
-
-## استفاده
-
-### 1. اجرای ربات
-
-برای اجرای ربات، از دستور زیر استفاده کنید:
-
-```bash
-python main.py
-```
-
-### 2. استفاده از ربات
-
-- **شروع کار**: با ارسال /start به ربات، راهنمایی اولیه را دریافت خواهید کرد.
-- **ارسال لینک**: لینک اسپاتیفای آهنگ، آلبوم یا پلی‌لیست مورد نظر خود را ارسال کنید.
-- **انتخاب کیفیت**: پس از ارسال لینک، دکمه‌های انتخاب کیفیت (128 kbps یا 320 kbps) برای شما ارسال خواهد شد.
-- **دریافت فایل**: پس از انتخاب کیفیت، فایل MP3 با کیفیت انتخاب شده به شما ارسال خواهد شد.
-
-## مشکلات و مشارکت
-
-برای گزارش مشکلات یا پیشنهادات به [Issues](https://github.com/power0matin/telegram-music-downloader-bot/issues) بروید. اگر می‌خواهید به توسعه ربات کمک کنید، لطفاً یک [Pull Request](https://github.com/power0matin/telegram-music-downloader-bot/pulls) ارسال کنید.
-
-## لایسنس
-
-این پروژه تحت [MIT License](LICENSE) منتشر شده است.
+Happy coding! 🎵🤖
