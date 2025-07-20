@@ -1,4 +1,3 @@
-
 <div style="text-align: center;">
   <h1>Welcome to the Telegram Music Downloader Bot</h1>
 </div>
@@ -8,12 +7,15 @@
 This project is a Telegram bot that allows users to download music directly from Spotify by sending a Spotify link to the bot. It supports downloading songs, albums, and playlists in different quality formats (128 kbps and 320 kbps).
 
 ## Features
+
 - Download songs, albums, and playlists from Spotify.
 - Choose download quality (128 kbps or 320 kbps).
 - Automatically send downloaded music files to users via Telegram.
 
 ## Prerequisites
+
 To run this bot, make sure you have the following installed:
+
 1. **Python 3.7+**
 2. **SpotDL** - A tool to download music from Spotify.
 3. **python-telegram-bot** - A Python library to interact with the Telegram API.
@@ -22,6 +24,7 @@ To run this bot, make sure you have the following installed:
 
 1. **Clone the Repository**
    Start by cloning the repository to your local machine:
+
    ```bash
    git clone https://github.com/yourusername/yourrepository.git
    cd yourrepository
@@ -29,24 +32,27 @@ To run this bot, make sure you have the following installed:
 
 2. **Install Dependencies**
    Install the necessary dependencies using pip:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 3. **Configuration**
    a) **Set Up Telegram Bot Token:**  
-      Obtain your Telegram bot token from the [BotFather](https://core.telegram.org/bots#botfather) on Telegram and add it to the `main.py` file:
-      ```python
-      BOT_TOKEN = 'YOUR_BOT_TOKEN'
-      ```
+    Obtain your Telegram bot token from the [BotFather](https://core.telegram.org/bots#botfather) on Telegram and add it to the `main.py` file:
+
+   ```python
+   BOT_TOKEN = 'YOUR_BOT_TOKEN'
+   ```
 
    b) **SpotDL Configuration:**  
-      Ensure SpotDL is correctly installed and configured. Follow the [SpotDL documentation](https://spotdl.readthedocs.io/) for any additional setup if needed.
+    Ensure SpotDL is correctly installed and configured. Follow the [SpotDL documentation](https://spotdl.readthedocs.io/) for any additional setup if needed.
 
 ## Usage
 
 1. **Run the Bot**
    Start the bot by running:
+
    ```bash
    python main.py
    ```

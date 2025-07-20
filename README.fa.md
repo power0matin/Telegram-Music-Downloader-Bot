@@ -5,7 +5,6 @@
 
 ## [Click Here for English (US)](README.en.md)
 
-
 این پروژه شامل یک ربات تلگرام است که به کاربران این امکان را می‌دهد تا آهنگ‌ها، آلبوم‌ها و پلی‌لیست‌ها را از اسپاتیفای دانلود کنند. کاربران می‌توانند با ارسال لینک اسپاتیفای به ربات، آهنگ‌های خود را با کیفیت‌های مختلف (128 kbps و 320 kbps) دریافت کنند.
 
 ## ویژگی‌ها
@@ -33,8 +32,6 @@ git clone https://github.com/yourusername/telegram-music-downloader-bot.git
 cd telegram-music-downloader-bot
 ```
 
-
-
 ### 2. نصب وابستگی‌ها
 
 پیش‌نیازها را با استفاده از pip نصب کنید:
@@ -42,7 +39,6 @@ cd telegram-music-downloader-bot
 ```bash
 pip install -r requirements.txt
 ```
-
 
 ### 3. پیکربندی
 
@@ -53,7 +49,6 @@ pip install -r requirements.txt
 ```python
 BOT_TOKEN = 'YOUR_BOT_TOKEN'
 ```
-
 
 #### ب) تنظیمات SpotDL
 
