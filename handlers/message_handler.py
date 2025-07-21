@@ -13,7 +13,7 @@ def register_message_handler(bot):
 
         markup = InlineKeyboardMarkup()
         markup.add(
-            InlineKeyboardButton("128 kbps", callback_data=f"128|{link}"),
-            InlineKeyboardButton("320 kbps", callback_data=f"320|{link}")
+            InlineKeyboardButton("128 kbps", callback_data=f"quality|128|{link}"),
+            InlineKeyboardButton("320 kbps", callback_data=f"quality|320|{link}")
         )
         bot.reply_to(message, "Please select your desired quality:", reply_markup=markup)
