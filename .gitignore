@@ -1,8 +1,25 @@
+# Python cache files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Virtual environment folders
 env/
 venv/
+
+# Environment & config
+.env
 *.env
 config.py
+
+# System/IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Log and runtime files
+*.log
+*.sqlite3
+queue/active_queue.json
+downloads/
