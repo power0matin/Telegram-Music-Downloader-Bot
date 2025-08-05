@@ -1,6 +1,6 @@
 from telebot.types import CallbackQuery
 from utils.downloader import download_and_send
-from spotify_handler import retrieve_link, is_spotify_url
+from .spotify_handler import retrieve_link, is_spotify_url
 
 
 def register_callback_handler(bot):
@@ -32,12 +32,18 @@ def register_callback_handler(bot):
         )
 
         # Edit the original message to prevent duplicate prompts
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=f"🎵 در حال دانلود با کیفیت {quality} kbps...\nلطفاً صبر کنید.",
-            reply_markup=None,  # Remove the inline keyboard
-        )
+        try:
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=f"🎵 در حال دانلود با کیفیت {quality} kbps...\nلطفاً صبر کنید.",
+                reply_markup=None,  # Remove the inline keyboard
+            )
+        except Exception as e:
+            bot.send_message(
+                call.message.chat.id,
+                f"❌ خطا در به‌روزرسانی پیام: {str(e)}",
+            )
 
         try:
             download_and_send(bot, call.message, link, quality)

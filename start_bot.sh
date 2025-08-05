@@ -1,7 +1,9 @@
 #!/bin/bash
 
+# Change to the project root directory
 cd "$(dirname "$0")"
 
+# Check for virtual environment
 if [ ! -d "venv" ]; then
     echo "❌ Virtual environment not found. Please run:"
     echo "   python3 -m venv venv"
@@ -10,14 +12,15 @@ if [ ! -d "venv" ]; then
     exit 1
 fi
 
+# Activate virtual environment
 source venv/bin/activate
 
-if [ -z "$BOT_TOKEN" ]; then
-    if [ -f ".env" ]; then
-        export $(grep -v '^#' .env | xargs)
-    fi
+# Load environment variables from .env file if it exists
+if [ -f ".env" ]; then
+    export $(grep -v '^#' .env | xargs)
 fi
 
+# Check for BOT_TOKEN
 if [ -z "$BOT_TOKEN" ]; then
     echo "❌ BOT_TOKEN environment variable is not set."
     echo "Please set it using: export BOT_TOKEN='your_bot_token_here'"
@@ -28,4 +31,5 @@ fi
 echo "🤖 Starting Spotify Downloader Bot..."
 echo "Press Ctrl+C to stop the bot"
 
-python3 bot.py
+# Set PYTHONPATH and run the bot
+PYTHONPATH=$(pwd) python3 bot.py

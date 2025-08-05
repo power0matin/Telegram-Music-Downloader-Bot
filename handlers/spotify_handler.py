@@ -67,6 +67,9 @@ def register_message_handler(bot):
         link_id = get_link_id(link)
         store_link(link_id, link)
 
+        # Add to queue (ensure this doesn't re-validate or process immediately)
+        add_to_queue(link, message.chat.id)
+
         # Create inline keyboard for quality selection
         markup = InlineKeyboardMarkup()
         markup.add(
@@ -82,7 +85,7 @@ def register_message_handler(bot):
             reply_markup=markup,
         )
 
-    # Register the callback handler
+    # Defer import to avoid circular import
     from .callback_handler import register_callback_handler
 
     register_callback_handler(bot)
