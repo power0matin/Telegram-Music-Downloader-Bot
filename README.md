@@ -9,7 +9,7 @@
 
 **A powerful and user-friendly Telegram bot for downloading music from Spotify**
 
-[🇫🇦 فارسی](README.fa.md)  • [🚀 Quick Start](#quick-start) • [🛠️ Setup](#installation--setup)
+[🇫🇦 فارسی](Documentation files/README.fa.md)  • [🚀 Quick Start](#quick-start) • [🛠️ Setup](#installation--setup)
 
 </div>
 
