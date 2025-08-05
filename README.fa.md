@@ -169,22 +169,36 @@ SUPPORTED_FORMATS = ['mp3', 'flac', 'ogg']
 
 ```
 Telegram-Music-Downloader-Bot/
-├── 🤖 bot.py                    # نقطه ورودی اصلی ربات
-├── ⚙️ config.py                 # مدیریت پیکربندی
-├── 📋 requirements.txt          # وابستگی‌های پایتون
-├── 🚀 start_bot.sh             # اسکریپت راه‌اندازی
-├── 📁 handlers/                # کنترل‌کننده‌های پیام ربات
+├── 🤖 bot.py                      # Main bot entry point
+├── ⚙️ config.example.py          # Example config (env-based settings)
+├── 📋 requirements.txt            # Python dependencies
+├── 🚀 start_bot.sh               # Startup script
+├── 📁 handlers/                  # Bot message handlers
 │   ├── __init__.py
-│   ├── spotify_handler.py       # پردازش URL اسپاتیفای
-│   └── callback_handler.py     # تعاملات دکمه
-├── 🛠️ utils/                   # ماژول‌های کمکی
+│   ├── spotify_handler.py         # Spotify URL processing
+│   └── callback_handler.py        # Button interactions
+├── 🛠️ utils/                     # Utility modules
 │   ├── __init__.py
-│   ├── downloader.py           # عملکرد دانلود
-│   ├── queue_functions.py      # مدیریت صف
-│   └── variables.py            # متغیرهای سراسری
-├── 📂 queue/                   # ذخیره‌سازی صف (خودکار ایجاد می‌شود)
-├── ⬇️ downloads/               # دانلودهای موقت (خودکار ایجاد می‌شود)
-└── 📚 فایل‌های مستندات
+│   ├── downloader.py              # Download logic
+│   ├── queue_functions.py         # Queue management
+│   └── variables.py               # Global/shared variables
+├── 📂 scripts/                   # Maintenance shell scripts
+│   ├── cleanup_processes.sh       # Kills stray download processes
+│   └── restart_bot.sh             # Restarts the bot
+├── 📂 systemd/                   # Systemd service definitions
+│   └── telegram_bot.service       # Service unit file
+├── 📂 .github/workflows/         # GitHub Actions workflows
+│   └── (your CI/CD YAML files here)
+├── 📂 queue/                     # Queue storage (auto-created)
+├── ⬇️ downloads/                 # Temporary downloads (auto-created)
+├── 📚 Documentation files        # Project documentation
+│   ├── README.md                  # English documentation
+│   ├── README.fa.md               # Persian documentation
+│   ├── SETUP_INSTRUCTIONS.md      # Installation & setup guide
+│   └── FIXES_APPLIED.md           # Summary of fixes
+├── 🧾 .gitignore                 # Git ignored files
+├── 🪪 LICENSE                    # Project license
+
 ```
 
 ## 🔧 عیب‌یابی
