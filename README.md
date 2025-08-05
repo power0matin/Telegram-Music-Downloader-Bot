@@ -1,4 +1,4 @@
-# 🎵 Telegram Spotify Downloader Bot
+# 🎵 Spotify Downloader Bot
 
 <div align="center">
 
@@ -7,9 +7,9 @@
 ![Spotify](https://img.shields.io/badge/Spotify-Downloader-green?style=for-the-badge&logo=spotify)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
-**A powerful and user-friendly Telegram bot for downloading music from Spotify**
+**A production-ready, scalable Telegram bot for downloading music from Spotify with advanced features**
 
-[🇫🇦 فارسی](docs/README.fa.md)  • [🚀 Quick Start](#quick-start) • [🛠️ Setup](#installation--setup)
+[🚀 Quick Start](#quick-start) • [🛠️ Setup](#installation--setup) • [📖 Documentation](#documentation)
 
 </div>
 
@@ -17,406 +17,314 @@
 
 ## ✨ Features
 
-- 🎵 **Multi-format Downloads**: Download individual tracks, full albums, and playlists
-- 🔊 **Quality Selection**: Choose between 128 kbps and 320 kbps audio quality
-- 🤖 **Interactive Interface**: User-friendly buttons and real-time progress updates
-- 🛡️ **Robust Error Handling**: Comprehensive validation and helpful error messages
-- 🗂️ **Smart File Management**: Automatic cleanup and organized downloads
-- ⚡ **High Performance**: Retry logic, rate limiting, and optimized downloads
-- 🔧 **Easy Deployment**: One-script setup with automatic dependency management
-- 🌐 **Multi-language Support**: English and Persian documentation
+### 🎵 **Core Features**
+- **Multi-format Downloads**: Tracks, albums, and playlists
+- **Quality Selection**: 128 kbps and 320 kbps options
+- **Metadata Extraction**: Artist names, track titles, album info
+- **Progress Updates**: Real-time download status messages
+- **Smart Validation**: Comprehensive Spotify URL validation
+
+### 🛡️ **Production Features**
+- **Rate Limiting**: Configurable flood protection (5 requests/60s default)
+- **Error Handling**: Robust error recovery with user-friendly messages
+- **Logging System**: Comprehensive logging with rotation
+- **Configuration Management**: Environment-based configuration
+- **Dependency Management**: Automatic FFmpeg installation
+
+### 🌐 **User Experience**
+- **Multilingual Support**: English and Persian (Farsi)
+- **Command Support**: `/start`, `/help` commands
+- **Interactive Interface**: Inline keyboards for quality selection
+- **File Management**: Automatic cleanup and size limits
+
+### 🔧 **Developer Features**
+- **Modular Architecture**: Clean separation of concerns
+- **Type Hints**: Full type annotation support
+- **Documentation**: Comprehensive code documentation
+- **Extensible Design**: Easy to add new features
 
 <a name="quick-start"></a>
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-Before you begin, ensure you have:
-
 - **Python 3.8+** installed on your system
 - A **Telegram Bot Token** (get one from [@BotFather](https://t.me/BotFather))
 - **Git** for cloning the repository
-- Internet connection for downloading dependencies
+- **Ubuntu/Debian** system (for automatic FFmpeg installation)
 
-### 1. Clone the Repository
+### 1. Clone and Setup
 
 ```bash
 git clone https://github.com/power0matin/Telegram-Music-Downloader-Bot.git
 cd Telegram-Music-Downloader-Bot
-```
 
-### 2. 🐍 Set Up and Activate Virtual Environment
-
-#### 🔹 Linux / macOS:
-
-```bash
 # Create virtual environment
 python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Activate virtual environment
-source venv/bin/activate
-```
-
-#### 🔹 Windows (CMD):
-
-```cmd
-:: Create virtual environment
-python -m venv venv
-
-:: Activate virtual environment
-venv\Scripts\activate.bat
-```
-
-#### 🔹 Windows (PowerShell):
-
-```powershell
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-venv\Scripts\Activate.ps1
-```
-
-✅ After activation, your terminal prompt should look like this:
-
-```bash
-(venv) user@machine:~/project-folder$
-```
-
-
-### 3. 📦 Install Dependencies
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-<details>
-  <summary>❗ Important Note: "externally-managed-environment" Error When Installing Packages</summary>
-
-Sometimes, when using pip to install packages (especially on Linux distros like Ubuntu 22.04+), you might encounter the following error:
-
-```
-error: externally-managed-environment
-```
-
-This occurs because your system restricts package installation in the global Python environment.
-
-#### Recommended solutions:
-
-1. **Ensure you're inside a virtual environment**. Use the following commands to confirm:
+### 2. Configuration
 
 ```bash
-which python
-which pip
-```
-
-The paths should point to your `venv/` directory.
-
-2. If you're inside a virtual environment and still see the error, you can force installation with:
-
-```bash
-pip install --break-system-packages -r requirements.txt
-```
-
-⚠️ **Warning:** Using `--break-system-packages` may interfere with your system Python packages. Use only if you're sure of the risks.
-
-3. Alternatively, use tools like `pipx` or containers (e.g. Docker) to isolate dependencies.
-
-</details>
-
-### 4. Configure Your Bot Token
-
-Choose one of these methods:
-
-**Method 1: Environment Variable**
-```bash
+# Set your bot token
 export BOT_TOKEN="your_bot_token_here"
+
+# Optional: Customize configuration
+export RATE_LIMIT_REQUESTS="5"
+export RATE_LIMIT_WINDOW_SECONDS="60"
+export DEFAULT_QUALITY="320"
+export MAX_DOWNLOAD_SIZE_MB="50"
+export LOG_LEVEL="INFO"
 ```
 
-**Method 2: Create .env file**
+### 3. Run the Bot
+
 ```bash
-echo "BOT_TOKEN=your_bot_token_here" > .env
+python bot.py
 ```
 
-**Method 3: Create config.py**
-```bash
-cp config.example.py config.py
-# Then edit config.py and add your token
-```
-
-### 5. Start the Bot
-
-**Using the startup script (recommended):**
-```bash
-chmod +x start_bot.sh
-./start_bot.sh
-```
-
-**Or manually:**
-```bash
-python3 bot.py
-```
-
-<a name="installation--setup"></a>
 ## 🛠️ Installation & Setup
 
-### Getting Your Bot Token
+### Environment Variables
 
-1. Open Telegram and search for [@BotFather](https://t.me/BotFather)
-2. Send `/newbot` and follow the instructions
-3. Choose a name and username for your bot
-4. Copy the bot token (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
-
-### System Dependencies
-
-The bot will automatically install FFmpeg if it's missing. For manual installation:
-
-**Ubuntu/Debian:**
-```bash
-sudo apt update && sudo apt install ffmpeg
-```
-
-**macOS:**
-```bash
-brew install ffmpeg
-```
-
-**Windows:**
-Download from [FFmpeg website](https://ffmpeg.org/download.html) or use package managers like Chocolatey.
-
-### Configuration Options
-
-Create a `config.py` file for advanced configuration:
-
-```python
-# Required
-BOT_TOKEN = 'your_bot_token_here'
-
-# Optional settings
-MAX_DOWNLOAD_SIZE = 50  # MB
-DOWNLOAD_TIMEOUT = 300  # seconds
-CLEANUP_INTERVAL = 3600  # seconds
-SUPPORTED_FORMATS = ['mp3', 'flac', 'ogg']
-```
-
-## 📱 How to Use
-
-### Basic Usage
-
-1. **Start the bot**: Send `/start` to your bot
-2. **Send a Spotify link**: Copy any Spotify URL and send it to the bot
-3. **Choose quality**: Select either 128 kbps or 320 kbps
-4. **Download**: Wait for your music to be processed and sent
-
-### Supported URL Types
-
-- **🎵 Tracks**: `https://open.spotify.com/track/...`
-- **💿 Albums**: `https://open.spotify.com/album/...`
-- **📜 Playlists**: `https://open.spotify.com/playlist/...`
-
-### Example Workflow
-
-```
-User: https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh
-Bot: 🎵 Found: "Never Gonna Give You Up" by Rick Astley
-     Choose your preferred quality:
-     [128 kbps] [320 kbps]
-
-User: [Clicks 320 kbps]
-Bot: ⬇️ Downloading...
-     ✅ Download complete! Sending file...
-     [Audio file sent]
-```
-
-## 🏗️ Project Structure
-
-```
-Telegram-Music-Downloader-Bot/
-├── 🤖 bot.py                      # Main bot entry point
-├── ⚙️ config.example.py          # Example config (env-based settings)
-├── 📋 requirements.txt            # Python dependencies
-├── 🚀 start_bot.sh               # Startup script
-├── 📁 handlers/                  # Bot message handlers
-│   ├── __init__.py
-│   ├── spotify_handler.py         # Spotify URL processing
-│   └── callback_handler.py        # Button interactions
-├── 🛠️ utils/                     # Utility modules
-│   ├── __init__.py
-│   ├── downloader.py              # Download logic
-│   ├── queue_functions.py         # Queue management
-│   └── variables.py               # Global/shared variables
-├── 📂 scripts/                   # Maintenance shell scripts
-│   ├── cleanup_processes.sh       # Kills stray download processes
-│   └── restart_bot.sh             # Restarts the bot
-├── 📂 systemd/                   # Systemd service definitions
-│   └── telegram_bot.service       # Service unit file
-├── 📂 .github/workflows/         # GitHub Actions workflows
-│   └── (your CI/CD YAML files here)
-├── 📂 queue/                     # Queue storage (auto-created)
-├── ⬇️ downloads/                 # Temporary downloads (auto-created)
-├── 📚 Documentation files        # Project documentation
-│   ├── README.md                  # English documentation
-│   ├── README.fa.md               # Persian documentation
-│   ├── SETUP_INSTRUCTIONS.md      # Installation & setup guide
-│   └── FIXES_APPLIED.md           # Summary of fixes
-├── 🧾 .gitignore                 # Git ignored files
-├── 🪪 LICENSE                    # Project license
-
-```
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**1. "BOT_TOKEN not set"**
-```bash
-# Solution: Set your bot token
-export BOT_TOKEN="your_token_here"
-```
-
-**2. "FFmpeg not found"**
-```bash
-# Solution: Install FFmpeg
-sudo apt install ffmpeg  # Ubuntu/Debian
-brew install ffmpeg      # macOS
-```
-
-**3. "Module not found" errors**
-```bash
-# Solution: Activate virtual environment and reinstall
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-**4. Download failures**
-- ✅ Verify the Spotify URL is valid and public
-- ✅ Check your internet connection
-- ✅ Some content may be geo-restricted or unavailable
-
-**5. Permission errors**
-```bash
-# Solution: Make scripts executable
-chmod +x start_bot.sh
-```
-
-### Debug Mode
-
-Run with verbose logging:
-```bash
-python3 bot.py --debug
-```
-
-### Getting Help
-
-- 📖 Check the [Setup Instructions](SETUP_INSTRUCTIONS.md)
-- 🐛 Report bugs in [Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues)
-- 💡 Request features via [Discussions](https://github.com/power0matin/Telegram-Music-Downloader-Bot/discussions)
-
-## 🔒 Security & Privacy
-
-- ✅ **No data collection**: The bot doesn't store user data or download history
-- ✅ **Secure token handling**: Bot tokens are stored securely via environment variables
-- ✅ **Automatic cleanup**: Temporary files are automatically deleted after sending
-- ✅ **Rate limiting**: Built-in protection against spam and abuse
-
-## 🚀 Deployment Options
-
-### Local Development
-```bash
-./start_bot.sh
-```
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `BOT_TOKEN` | **Required** - Telegram bot token | - |
+| `DOWNLOAD_DIR` | Directory for downloads | `downloads` |
+| `QUEUE_DIR` | Directory for queue files | `queue` |
+| `MAX_DOWNLOAD_SIZE_MB` | Max file size in MB | `50` |
+| `RATE_LIMIT_REQUESTS` | Max requests per window | `5` |
+| `RATE_LIMIT_WINDOW_SECONDS` | Rate limit window in seconds | `60` |
+| `DEFAULT_QUALITY` | Default audio quality (128/320) | `320` |
+| `LOG_LEVEL` | Logging level | `INFO` |
+| `SUPPORTED_LANGUAGES` | Comma-separated languages | `en,fa` |
+| `DEFAULT_LANGUAGE` | Default language | `en` |
 
 ### Production Deployment
 
-**Using systemd (Linux):**
+#### Using Systemd (Recommended)
+
+1. Create a service file:
+
 ```bash
-# Copy the service file
 sudo cp systemd/spotify-bot.service /etc/systemd/system/
+sudo systemctl daemon-reload
 sudo systemctl enable spotify-bot
 sudo systemctl start spotify-bot
 ```
 
-**Using Docker:**
-```dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["python3", "bot.py"]
+2. Check status:
+
+```bash
+sudo systemctl status spotify-bot
+sudo journalctl -u spotify-bot -f  # View logs
 ```
 
-**Using PM2:**
+#### Using Docker
+
 ```bash
-npm install -g pm2
-pm2 start bot.py --interpreter python3 --name spotify-bot
+# Build image
+docker build -t spotify-bot .
+
+# Run container
+docker run -d \
+  --name spotify-bot \
+  -e BOT_TOKEN="your_token_here" \
+  -v $(pwd)/downloads:/app/downloads \
+  -v $(pwd)/logs:/app/logs \
+  spotify-bot
+```
+
+## 📖 Documentation
+
+### Project Structure
+
+```
+├── bot.py                      # Main bot entry point
+├── config.py                   # Configuration management
+├── requirements.txt            # Python dependencies
+├── handlers/                   # Message and callback handlers
+│   ├── command_handler.py      # /start, /help commands
+│   ├── spotify_handler.py      # Spotify URL processing
+│   └── callback_handler.py     # Inline keyboard callbacks
+├── utils/                      # Utility modules
+│   ├── downloader.py          # Enhanced download engine
+│   ├── spotify_utils.py       # URL validation & metadata
+│   ├── rate_limiter.py        # Rate limiting system
+│   ├── i18n.py               # Internationalization
+│   ├── logging_config.py     # Logging configuration
+│   └── queue_functions.py    # Queue management
+├── systemd/                   # Systemd service files
+├── scripts/                   # Deployment scripts
+└── docs/                      # Additional documentation
+```
+
+### API Reference
+
+#### Core Classes
+
+- `SpotifyBot`: Main bot class with lifecycle management
+- `SpotifyDownloader`: Enhanced download engine
+- `RateLimiter`: User rate limiting system
+- `Messages`: Multilingual message system
+- `SpotifyURLValidator`: URL validation and parsing
+
+#### Key Functions
+
+- `download_and_send()`: Main download orchestrator
+- `validate_spotify_url()`: URL validation
+- `get_spotify_metadata()`: Metadata extraction
+- `check_rate_limit()`: Rate limit verification
+
+### Supported Spotify URLs
+
+The bot supports various Spotify URL formats:
+
+```
+# Direct URLs
+https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh
+https://open.spotify.com/album/1DFixLWuPkv3KT3TnV35m3
+https://open.spotify.com/playlist/37i9dQZF1DX0XUsuxWHRQd
+
+# Sharing URLs (automatically cleaned)
+https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh?si=abc123
+
+# Spotify URIs
+spotify:track:4iV5W9uYEdYUVa79Axb7Rh
+spotify:album:1DFixLWuPkv3KT3TnV35m3
+
+# Regional URLs
+https://open.spotify.com/de/track/4iV5W9uYEdYUVa79Axb7Rh
+```
+
+## 🔧 Advanced Configuration
+
+### Custom Message Templates
+
+Modify messages in `utils/i18n.py` to customize bot responses:
+
+```python
+TRANSLATIONS = {
+    'en': {
+        'welcome': "Your custom welcome message",
+        'help': "Your custom help text",
+        # ... other messages
+    }
+}
+```
+
+### Rate Limiting Configuration
+
+```python
+# Custom rate limiter
+from utils.rate_limiter import RateLimiter
+
+rate_limiter = RateLimiter(
+    max_requests=10,      # 10 requests
+    window_seconds=120    # per 2 minutes
+)
+```
+
+### Logging Configuration
+
+```bash
+# Environment variables for logging
+export LOG_LEVEL="DEBUG"        # DEBUG, INFO, WARNING, ERROR
+export LOG_FILE="custom.log"    # Custom log file name
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **FFmpeg not found**
+   ```bash
+   sudo apt update
+   sudo apt install ffmpeg
+   ```
+
+2. **Permission denied errors**
+   ```bash
+   chmod +x start_bot.sh
+   chown -R $USER:$USER downloads/ logs/
+   ```
+
+3. **Rate limiting issues**
+   - Increase `RATE_LIMIT_REQUESTS`
+   - Decrease `RATE_LIMIT_WINDOW_SECONDS`
+
+4. **Memory issues**
+   - Reduce `MAX_DOWNLOAD_SIZE_MB`
+   - Enable log rotation
+
+### Debug Mode
+
+```bash
+export LOG_LEVEL="DEBUG"
+python bot.py
+```
+
+### Monitoring
+
+Check logs for issues:
+
+```bash
+# View real-time logs
+tail -f logs/spotify_bot.log
+
+# Search for errors
+grep "ERROR" logs/spotify_bot.log
+
+# Monitor downloads
+grep "Download" logs/spotify_bot.log
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how you can help:
-
-1. **🍴 Fork** the repository
-2. **🌟 Create** a feature branch: `git checkout -b feature/amazing-feature`
-3. **💾 Commit** your changes: `git commit -m 'Add amazing feature'`
-4. **📤 Push** to the branch: `git push origin feature/amazing-feature`
-5. **🔄 Open** a Pull Request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ### Development Setup
 
 ```bash
-# Clone your fork
-git clone https://github.com/yourusername/Telegram-Music-Downloader-Bot.git
-cd Telegram-Music-Downloader-Bot
-
-# Create development environment
-python3 -m venv dev-env
-source dev-env/bin/activate
+# Install development dependencies
 pip install -r requirements.txt
 
-# Install development dependencies
-pip install black pylint pytest
+# Run with debug logging
+export LOG_LEVEL="DEBUG"
+python bot.py
 
-# Run tests
-python3 -m pytest tests/
+# Run tests (when available)
+pytest tests/
 ```
 
-## 📊 Performance
+## 📜 License
 
-- ⚡ **Fast downloads**: Optimized for speed with parallel processing
-- 💾 **Memory efficient**: Smart memory management for large files
-- 🔄 **Retry logic**: Automatic retry on temporary failures
-- 📈 **Scalable**: Designed to handle multiple concurrent users
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📋 Requirements
+## ⚠️ Disclaimer
 
-- **Python**: 3.8 or higher
-- **FFmpeg**: For audio processing (auto-installed)
-- **SpotDL**: 4.2.1+ (included in requirements)
-- **Storage**: At least 100MB free space for temporary files
+This bot is for educational purposes only. Users are responsible for complying with Spotify's Terms of Service and applicable copyright laws. The developers are not responsible for any misuse of this software.
 
 ## 📞 Support
 
-- 🆘 **Issues**: [GitHub Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/power0matin/Telegram-Music-Downloader-Bot/discussions)
-- 📧 **Email**: [Contact maintainer](mailto:power0matin@example.com)
-
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **SpotDL**: For the excellent Spotify downloading library
-- **pyTelegramBotAPI**: For the robust Telegram bot framework
-- **Contributors**: Thanks to everyone who has contributed to this project
+- 🐛 **Issues**: [GitHub Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues)
+- 📧 **Contact**: [Email](mailto:power0matin@gmail.com)
+- 💬 **Telegram**: [@power0matin](https://t.me/power0matin)
 
 ---
 
 <div align="center">
 
-**⭐ Star this repo if you found it helpful!**
+**Made with ❤️ by [power0matin](https://github.com/power0matin)**
 
-Made with ❤️ by the open-source community
+⭐ **If you found this project helpful, please give it a star!** ⭐
 
 </div>

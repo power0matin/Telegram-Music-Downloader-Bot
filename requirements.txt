@@ -1,3 +1,17 @@
-pyTelegramBotAPI>=4.0.0
-requests>=2.28.0,<3.0.0
-spotdl>=4.0.0
+# Core Telegram Bot API
+pyTelegramBotAPI>=4.14.0,<5.0.0
+
+# HTTP requests for metadata extraction
+requests>=2.31.0,<3.0.0
+
+# Spotify downloader
+spotdl>=4.2.0,<5.0.0
+
+# Optional: For better async support (if needed)
+# aiofiles>=23.0.0,<24.0.0
+
+# Development dependencies (uncomment for development)
+# pytest>=7.4.0,<8.0.0
+# pytest-asyncio>=0.21.0,<1.0.0
+# black>=23.0.0,<24.0.0
+# flake8>=6.0.0,<7.0.0
