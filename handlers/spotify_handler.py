@@ -1,7 +1,6 @@
 import hashlib
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from utils.queue_functions import add_to_queue
-from .callback_handler import register_callback_handler
 
 # Simple in-memory storage for link_id -> link mapping
 link_store = {}
@@ -36,11 +35,10 @@ def is_spotify_url(url: str) -> bool:
 
 
 def register_message_handler(bot):
-    # Register message handler for Spotify links
     @bot.message_handler(func=lambda message: True)
     def handle_spotify_link(message: Message):
         if not message.text:
-            bot.reply_to(message, "Please send a text message with a Spotify link.")
+            bot.reply_to(message, "لطفاً یک پیام متنی حاوی لینک Spotify ارسال کنید.")
             return
 
         text = message.text.strip()
@@ -48,30 +46,28 @@ def register_message_handler(bot):
         if not text.startswith("http"):
             bot.reply_to(
                 message,
-                "🎵 Welcome to Spotify Downloader Bot!\n\nPlease send a valid Spotify link:\n"
-                "• Track: https://open.spotify.com/track/...\n"
-                "• Album: https://open.spotify.com/album/...\n"
-                "• Playlist: https://open.spotify.com/playlist/...",
+                "🎵 به ربات دانلود Spotify خوش آمدید!\n\nلطفاً یک لینک معتبر Spotify ارسال کنید:\n"
+                "• آهنگ: https://open.spotify.com/track/...\n"
+                "• آلبوم: https://open.spotify.com/album/...\n"
+                "• پلی‌لیست: https://open.spotify.com/playlist/...",
             )
             return
 
         if not is_spotify_url(text):
             bot.reply_to(
                 message,
-                "❌ This doesn't appear to be a valid Spotify link.\n\nPlease send a valid Spotify link for:\n"
-                "• Track\n• Album\n• Playlist",
+                "❌ این لینک به نظر یک لینک معتبر Spotify نیست.\n\nلطفاً یک لینک معتبر برای:\n"
+                "• آهنگ\n• آلبوم\n• پلی‌لیست ارسال کنید.",
             )
             return
 
         link = text
 
-        # Add to your processing queue (implement this as needed)
-        add_to_queue(link, message.chat.id)
-
         # Generate a short ID for callback data
         link_id = get_link_id(link)
         store_link(link_id, link)
 
+        # Create inline keyboard for quality selection
         markup = InlineKeyboardMarkup()
         markup.add(
             InlineKeyboardButton("🎵 128 kbps", callback_data=f"quality|128|{link_id}"),
@@ -82,12 +78,11 @@ def register_message_handler(bot):
 
         bot.reply_to(
             message,
-            "✅ Valid Spotify link detected!\nPlease select your desired quality:",
+            "✅ لینک معتبر Spotify شناسایی شد!\nلطفاً کیفیت مورد نظر خود را انتخاب کنید:",
             reply_markup=markup,
         )
 
-    # Also register the callback handler to handle button presses
+    # Register the callback handler
+    from .callback_handler import register_callback_handler
+
     register_callback_handler(bot)
-
-
-# You may want to expose retrieve_link for your callback handler usage
