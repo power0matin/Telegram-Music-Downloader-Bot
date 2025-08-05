@@ -9,7 +9,7 @@
 
 **ربات قدرتمند و کاربرپسند تلگرام برای دانلود موزیک از اسپاتیفای**
 
-[🇺🇸 English](README.md) • [📖 مستندات](#مستندات) • [🚀 شروع سریع](#شروع-سریع) • [🛠️ نصب و راه‌اندازی](#نصب-و-راه‌اندازی)
+[🇺🇸 English](../README.md) • [📖 مستندات](#مستندات) • [🚀 شروع سریع](#شروع-سریع) • [🛠️ نصب و راه‌اندازی](#نصب-و-راه‌اندازی)
 
 </div>
 
@@ -26,6 +26,7 @@
 - 🔧 **استقرار آسان**: راه‌اندازی تک‌اسکریپت با مدیریت خودکار وابستگی‌ها
 - 🌐 **پشتیبانی چندزبانه**: مستندات انگلیسی و فارسی
 
+<a name="شروع-سریع"></a>
 ## 🚀 شروع سریع
 
 ### پیش‌نیازها
@@ -95,6 +96,7 @@ chmod +x start_bot.sh
 python3 bot.py
 ```
 
+<a name="نصب-و-راه‌اندازی"></a>
 ## 🛠️ نصب و راه‌اندازی
 
 ### دریافت توکن ربات
@@ -198,7 +200,6 @@ Telegram-Music-Downloader-Bot/
 │   └── FIXES_APPLIED.md           # Summary of fixes
 ├── 🧾 .gitignore                 # Git ignored files
 ├── 🪪 LICENSE                    # Project license
-
 ```
 
 ## 🔧 عیب‌یابی
@@ -245,7 +246,7 @@ python3 bot.py --debug
 
 ### دریافت کمک
 
-- 📖 [دستورالعمل‌های راه‌اندازی](SETUP_INSTRUCTIONS.md) را بررسی کنید
+- 📖 [دستورالعمل‌های راه‌اندازی](../SETUP_INSTRUCTIONS.md) را بررسی کنید
 - 🐛 باگ‌ها را در [Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues) گزارش دهید
 - 💡 ویژگی‌های جدید را از طریق [Discussions](https://github.com/power0matin/Telegram-Music-Downloader-Bot/discussions) درخواست کنید
 
@@ -340,7 +341,7 @@ python3 -m pytest tests/
 
 ## 📄 مجوز
 
-این پروژه تحت مجوز **MIT** منتشر شده است - فایل [LICENSE](LICENSE) را برای جزئیات ببینید.
+این پروژه تحت مجوز **MIT** منتشر شده است - فایل [LICENSE](../LICENSE) را برای جزئیات ببینید.
 
 ## 🙏 تشکرات
 
