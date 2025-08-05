@@ -45,17 +45,79 @@ git clone https://github.com/power0matin/Telegram-Music-Downloader-Bot.git
 cd Telegram-Music-Downloader-Bot
 ```
 
-### 2. راه‌اندازی محیط مجازی
+### 2. 🐍 ساخت و فعال‌سازی محیط مجازی (Virtual Environment)
+
+#### 🔹 Linux / macOS:
 
 ```bash
-# ایجاد محیط مجازی
+# ساخت محیط مجازی
 python3 -m venv venv
 
-# فعال‌سازی
-source venv/bin/activate  # Linux/Mac
-# یا
-venv\Scripts\activate     # Windows
+# فعال‌سازی محیط مجازی
+source venv/bin/activate
+````
+
+#### 🔹 Windows (CMD):
+
+```cmd
+:: ساخت محیط مجازی
+python -m venv venv
+
+:: فعال‌سازی محیط مجازی
+venv\Scripts\activate.bat
 ```
+
+#### 🔹 Windows (PowerShell):
+
+```powershell
+# ساخت محیط مجازی
+python -m venv venv
+
+# فعال‌سازی محیط مجازی
+venv\Scripts\Activate.ps1
+```
+
+✅ بعد از فعال‌سازی، خط فرمان شما باید به شکل زیر تغییر کند:
+
+```bash
+(venv) user@machine:~/project-folder$
+```
+
+<details>
+
+  <summary>❗ نکته مهم درباره نصب پکیج‌ها و خطای "externally-managed-environment"</summary>
+
+گاهی هنگام نصب پکیج‌ها با pip در بعضی توزیع‌های لینوکس مثل Ubuntu 22.04+ ممکن است با خطای زیر مواجه شوید:
+
+```
+error: externally-managed-environment
+```
+
+این به دلیل سیاست مدیریت بسته‌های سیستم توسط توزیع است که از نصب مستقیم pip روی محیط سیستمی جلوگیری می‌کند.
+
+#### راهکارهای پیشنهادی:
+
+1. مطمئن شوید که در **محیط مجازی فعال شده (venv)** هستید. دستور زیر مسیر python و pip را نشان می‌دهد:
+
+```bash
+which python
+which pip
+```
+
+این مسیرها باید داخل فولدر venv باشند.
+
+2. اگر در محیط مجازی هستید و همچنان این خطا را می‌بینید، برای نصب پکیج‌ها می‌توانید دستور زیر را با **احتیاط** و آگاهی استفاده کنید:
+
+```bash
+pip install --break-system-packages -r requirements.txt
+```
+
+⚠️ **هشدار:** استفاده از `--break-system-packages` ممکن است باعث تداخل یا خراب شدن بسته‌های سیستم شود. فقط در صورتی از آن استفاده کنید که مطمئن هستید و راه‌حل دیگری ندارید.
+
+3. اگر می‌خواهید بدون دردسر پکیج‌ها را مدیریت کنید، توصیه می‌شود از virtual environment استفاده کنید یا از ابزارهایی مثل `pipx` برای نصب برنامه‌های پایتون به صورت ایزوله بهره ببرید.
+</details>
+
+
 
 ### 3. نصب وابستگی‌ها
 
@@ -349,7 +411,6 @@ python3 -m pytest tests/
 - **pyTelegramBotAPI**: برای فریمورک قوی ربات تلگرام
 - **مشارکت‌کنندگان**: تشکر از همه کسانی که در این پروژه مشارکت کرده‌اند
 
----
 
 <div align="center">
 
