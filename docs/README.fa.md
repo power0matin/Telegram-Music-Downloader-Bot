@@ -82,6 +82,11 @@ venv\Scripts\Activate.ps1
 ```bash
 (venv) user@machine:~/project-folder$
 ```
+### 3. نصب وابستگی‌ها
+
+```bash
+pip install -r requirements.txt
+```
 
 <details>
 
@@ -116,7 +121,6 @@ pip install --break-system-packages -r requirements.txt
 
 3. اگر می‌خواهید بدون دردسر پکیج‌ها را مدیریت کنید، توصیه می‌شود از virtual environment استفاده کنید یا از ابزارهایی مثل `pipx` برای نصب برنامه‌های پایتون به صورت ایزوله بهره ببرید.
 </details>
-
 
 
 ### 3. نصب وابستگی‌ها

@@ -45,23 +45,84 @@ git clone https://github.com/power0matin/Telegram-Music-Downloader-Bot.git
 cd Telegram-Music-Downloader-Bot
 ```
 
-### 2. Set Up Virtual Environment
+### 2. 🐍 Set Up and Activate Virtual Environment
+
+#### 🔹 Linux / macOS:
 
 ```bash
 # Create virtual environment
 python3 -m venv venv
 
-# Activate it
-source venv/bin/activate  # Linux/Mac
-# or
-venv\Scripts\activate     # Windows
+# Activate virtual environment
+source venv/bin/activate
 ```
 
-### 3. Install Dependencies
+#### 🔹 Windows (CMD):
+
+```cmd
+:: Create virtual environment
+python -m venv venv
+
+:: Activate virtual environment
+venv\Scripts\activate.bat
+```
+
+#### 🔹 Windows (PowerShell):
+
+```powershell
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+venv\Scripts\Activate.ps1
+```
+
+✅ After activation, your terminal prompt should look like this:
+
+```bash
+(venv) user@machine:~/project-folder$
+```
+
+
+### 3. 📦 Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
+
+<details>
+  <summary>❗ Important Note: "externally-managed-environment" Error When Installing Packages</summary>
+
+Sometimes, when using pip to install packages (especially on Linux distros like Ubuntu 22.04+), you might encounter the following error:
+
+```
+error: externally-managed-environment
+```
+
+This occurs because your system restricts package installation in the global Python environment.
+
+#### Recommended solutions:
+
+1. **Ensure you're inside a virtual environment**. Use the following commands to confirm:
+
+```bash
+which python
+which pip
+```
+
+The paths should point to your `venv/` directory.
+
+2. If you're inside a virtual environment and still see the error, you can force installation with:
+
+```bash
+pip install --break-system-packages -r requirements.txt
+```
+
+⚠️ **Warning:** Using `--break-system-packages` may interfere with your system Python packages. Use only if you're sure of the risks.
+
+3. Alternatively, use tools like `pipx` or containers (e.g. Docker) to isolate dependencies.
+
+</details>
 
 ### 4. Configure Your Bot Token
 
