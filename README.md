@@ -169,22 +169,36 @@ Bot: ⬇️ Downloading...
 
 ```
 Telegram-Music-Downloader-Bot/
-├── 🤖 bot.py                    # Main bot entry point
-├── ⚙️ config.py                 # Configuration management
-├── 📋 requirements.txt          # Python dependencies
-├── 🚀 start_bot.sh             # Startup script
-├── 📁 handlers/                # Bot message handlers
+├── 🤖 bot.py                      # Main bot entry point
+├── ⚙️ config.example.py          # Example config (env-based settings)
+├── 📋 requirements.txt            # Python dependencies
+├── 🚀 start_bot.sh               # Startup script
+├── 📁 handlers/                  # Bot message handlers
 │   ├── __init__.py
-│   ├── spotify_handler.py       # Spotify URL processing
-│   └── callback_handler.py     # Button interactions
-├── 🛠️ utils/                   # Utility modules
+│   ├── spotify_handler.py         # Spotify URL processing
+│   └── callback_handler.py        # Button interactions
+├── 🛠️ utils/                     # Utility modules
 │   ├── __init__.py
-│   ├── downloader.py           # Download functionality
-│   ├── queue_functions.py      # Queue management
-│   └── variables.py            # Global variables
-├── 📂 queue/                   # Queue storage (auto-created)
-├── ⬇️ downloads/               # Temporary downloads (auto-created)
-└── 📚 Documentation files
+│   ├── downloader.py              # Download logic
+│   ├── queue_functions.py         # Queue management
+│   └── variables.py               # Global/shared variables
+├── 📂 scripts/                   # Maintenance shell scripts
+│   ├── cleanup_processes.sh       # Kills stray download processes
+│   └── restart_bot.sh             # Restarts the bot
+├── 📂 systemd/                   # Systemd service definitions
+│   └── telegram_bot.service       # Service unit file
+├── 📂 .github/workflows/         # GitHub Actions workflows
+│   └── (your CI/CD YAML files here)
+├── 📂 queue/                     # Queue storage (auto-created)
+├── ⬇️ downloads/                 # Temporary downloads (auto-created)
+├── 📚 Documentation files        # Project documentation
+│   ├── README.md                  # English documentation
+│   ├── README.fa.md               # Persian documentation
+│   ├── SETUP_INSTRUCTIONS.md      # Installation & setup guide
+│   └── FIXES_APPLIED.md           # Summary of fixes
+├── 🧾 .gitignore                 # Git ignored files
+├── 🪪 LICENSE                    # Project license
+
 ```
 
 ## 🔧 Troubleshooting
