@@ -18,6 +18,7 @@
 ## ✨ Features
 
 ### 🎵 **Core Features**
+
 - **Multi-format Downloads**: Tracks, albums, and playlists
 - **Quality Selection**: 128 kbps and 320 kbps options
 - **Metadata Extraction**: Artist names, track titles, album info
@@ -25,6 +26,7 @@
 - **Smart Validation**: Comprehensive Spotify URL validation
 
 ### 🛡️ **Production Features**
+
 - **Rate Limiting**: Configurable flood protection (5 requests/60s default)
 - **Error Handling**: Robust error recovery with user-friendly messages
 - **Logging System**: Comprehensive logging with rotation
@@ -32,18 +34,21 @@
 - **Dependency Management**: Automatic FFmpeg installation
 
 ### 🌐 **User Experience**
+
 - **Multilingual Support**: English and Persian (Farsi)
 - **Command Support**: `/start`, `/help` commands
 - **Interactive Interface**: Inline keyboards for quality selection
 - **File Management**: Automatic cleanup and size limits
 
 ### 🔧 **Developer Features**
+
 - **Modular Architecture**: Clean separation of concerns
 - **Type Hints**: Full type annotation support
 - **Documentation**: Comprehensive code documentation
 - **Extensible Design**: Easy to add new features
 
 <a name="quick-start"></a>
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -91,18 +96,18 @@ python bot.py
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `BOT_TOKEN` | **Required** - Telegram bot token | - |
-| `DOWNLOAD_DIR` | Directory for downloads | `downloads` |
-| `QUEUE_DIR` | Directory for queue files | `queue` |
-| `MAX_DOWNLOAD_SIZE_MB` | Max file size in MB | `50` |
-| `RATE_LIMIT_REQUESTS` | Max requests per window | `5` |
-| `RATE_LIMIT_WINDOW_SECONDS` | Rate limit window in seconds | `60` |
-| `DEFAULT_QUALITY` | Default audio quality (128/320) | `320` |
-| `LOG_LEVEL` | Logging level | `INFO` |
-| `SUPPORTED_LANGUAGES` | Comma-separated languages | `en,fa` |
-| `DEFAULT_LANGUAGE` | Default language | `en` |
+| Variable                    | Description                       | Default     |
+| --------------------------- | --------------------------------- | ----------- |
+| `BOT_TOKEN`                 | **Required** - Telegram bot token | -           |
+| `DOWNLOAD_DIR`              | Directory for downloads           | `downloads` |
+| `QUEUE_DIR`                 | Directory for queue files         | `queue`     |
+| `MAX_DOWNLOAD_SIZE_MB`      | Max file size in MB               | `50`        |
+| `RATE_LIMIT_REQUESTS`       | Max requests per window           | `5`         |
+| `RATE_LIMIT_WINDOW_SECONDS` | Rate limit window in seconds      | `60`        |
+| `DEFAULT_QUALITY`           | Default audio quality (128/320)   | `320`       |
+| `LOG_LEVEL`                 | Logging level                     | `INFO`      |
+| `SUPPORTED_LANGUAGES`       | Comma-separated languages         | `en,fa`     |
+| `DEFAULT_LANGUAGE`          | Default language                  | `en`        |
 
 ### Production Deployment
 
@@ -242,18 +247,21 @@ export LOG_FILE="custom.log"    # Custom log file name
 ### Common Issues
 
 1. **FFmpeg not found**
+
    ```bash
    sudo apt update
    sudo apt install ffmpeg
    ```
 
 2. **Permission denied errors**
+
    ```bash
    chmod +x start_bot.sh
    chown -R $USER:$USER downloads/ logs/
    ```
 
 3. **Rate limiting issues**
+
    - Increase `RATE_LIMIT_REQUESTS`
    - Decrease `RATE_LIMIT_WINDOW_SECONDS`
 

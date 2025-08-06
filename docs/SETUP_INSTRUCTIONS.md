@@ -3,6 +3,7 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.8 or higher
 - FFmpeg (will be installed automatically if missing)
 - Telegram Bot Token
@@ -40,6 +41,7 @@ export BOT_TOKEN="your_bot_token_here"
 ```
 
 Or create a `.env` file in the project root:
+
 ```
 BOT_TOKEN=your_bot_token_here
 ```
@@ -47,11 +49,13 @@ BOT_TOKEN=your_bot_token_here
 ### 4. Run the Bot
 
 #### Option 1: Using the startup script (recommended)
+
 ```bash
 ./start_bot.sh
 ```
 
 #### Option 2: Manual start
+
 ```bash
 source venv/bin/activate
 python3 bot.py
@@ -71,14 +75,17 @@ python3 bot.py
 ### Common Issues
 
 1. **"No module named 'telebot'"**
+
    - Make sure virtual environment is activated
    - Run: `pip install -r requirements.txt`
 
 2. **"FFmpeg not found"**
+
    - The bot will try to install FFmpeg automatically
    - Manual installation: `sudo apt install ffmpeg` (Ubuntu/Debian)
 
 3. **"BOT_TOKEN not set"**
+
    - Set the environment variable: `export BOT_TOKEN="your_token"`
    - Or add it to a `.env` file
 

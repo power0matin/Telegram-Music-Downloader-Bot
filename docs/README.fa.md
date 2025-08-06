@@ -13,8 +13,6 @@
 
 </div>
 
-
-
 ## ✨ ویژگی‌ها
 
 - 🎵 **دانلود چندفرمته**: دانلود تک‌آهنگ، آلبوم کامل و پلی‌لیست
@@ -27,6 +25,7 @@
 - 🌐 **پشتیبانی چندزبانه**: مستندات انگلیسی و فارسی
 
 <a name="شروع-سریع"></a>
+
 ## 🚀 شروع سریع
 
 ### پیش‌نیازها
@@ -55,7 +54,7 @@ python3 -m venv venv
 
 # فعال‌سازی محیط مجازی
 source venv/bin/activate
-````
+```
 
 #### 🔹 Windows (CMD):
 
@@ -82,6 +81,7 @@ venv\Scripts\Activate.ps1
 ```bash
 (venv) user@machine:~/project-folder$
 ```
+
 ### 3. نصب وابستگی‌ها
 
 ```bash
@@ -122,7 +122,6 @@ pip install --break-system-packages -r requirements.txt
 3. اگر می‌خواهید بدون دردسر پکیج‌ها را مدیریت کنید، توصیه می‌شود از virtual environment استفاده کنید یا از ابزارهایی مثل `pipx` برای نصب برنامه‌های پایتون به صورت ایزوله بهره ببرید.
 </details>
 
-
 ### 3. نصب وابستگی‌ها
 
 ```bash
@@ -134,16 +133,19 @@ pip install -r requirements.txt
 یکی از این روش‌ها را انتخاب کنید:
 
 **روش 1: متغیر محیطی**
+
 ```bash
 export BOT_TOKEN="توکن_ربات_شما"
 ```
 
 **روش 2: ایجاد فایل .env**
+
 ```bash
 echo "BOT_TOKEN=توکن_ربات_شما" > .env
 ```
 
 **روش 3: ایجاد فایل config.py**
+
 ```bash
 cp config.example.py config.py
 # سپس config.py را ویرایش کنید و توکن خود را اضافه کنید
@@ -152,17 +154,20 @@ cp config.example.py config.py
 ### 5. راه‌اندازی ربات
 
 **استفاده از اسکریپت راه‌اندازی (توصیه می‌شود):**
+
 ```bash
 chmod +x start_bot.sh
 ./start_bot.sh
 ```
 
 **یا به صورت دستی:**
+
 ```bash
 python3 bot.py
 ```
 
 <a name="نصب-و-راه‌اندازی"></a>
+
 ## 🛠️ نصب و راه‌اندازی
 
 ### دریافت توکن ربات
@@ -177,11 +182,13 @@ python3 bot.py
 ربات به صورت خودکار FFmpeg را در صورت نبودن نصب می‌کند. برای نصب دستی:
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt update && sudo apt install ffmpeg
 ```
 
 **macOS:**
+
 ```bash
 brew install ffmpeg
 ```
@@ -273,12 +280,14 @@ Telegram-Music-Downloader-Bot/
 ### مشکلات رایج
 
 **1. "BOT_TOKEN تنظیم نشده"**
+
 ```bash
 # راه‌حل: توکن ربات خود را تنظیم کنید
 export BOT_TOKEN="توکن_شما"
 ```
 
 **2. "FFmpeg پیدا نشد"**
+
 ```bash
 # راه‌حل: FFmpeg را نصب کنید
 sudo apt install ffmpeg  # Ubuntu/Debian
@@ -286,6 +295,7 @@ brew install ffmpeg      # macOS
 ```
 
 **3. خطاهای "ماژول پیدا نشد"**
+
 ```bash
 # راه‌حل: محیط مجازی را فعال کرده و مجدداً نصب کنید
 source venv/bin/activate
@@ -293,11 +303,13 @@ pip install -r requirements.txt
 ```
 
 **4. شکست در دانلود**
+
 - ✅ اطمینان حاصل کنید URL اسپاتیفای معتبر و عمومی است
 - ✅ اتصال اینترنت خود را بررسی کنید
 - ✅ برخی محتوا ممکن است محدود جغرافیایی یا در دسترس نباشد
 
 **5. خطاهای دسترسی**
+
 ```bash
 # راه‌حل: اسکریپت‌ها را قابل اجرا کنید
 chmod +x start_bot.sh
@@ -306,6 +318,7 @@ chmod +x start_bot.sh
 ### حالت اشکال‌زدایی
 
 اجرا با لاگ دقیق:
+
 ```bash
 python3 bot.py --debug
 ```
@@ -326,6 +339,7 @@ python3 bot.py --debug
 ## 🚀 گزینه‌های استقرار
 
 ### توسعه محلی
+
 ```bash
 ./start_bot.sh
 ```
@@ -333,6 +347,7 @@ python3 bot.py --debug
 ### استقرار تولید
 
 **استفاده از systemd (Linux):**
+
 ```bash
 # کپی فایل سرویس
 sudo cp systemd/spotify-bot.service /etc/systemd/system/
@@ -341,6 +356,7 @@ sudo systemctl start spotify-bot
 ```
 
 **استفاده از Docker:**
+
 ```dockerfile
 FROM python:3.9-slim
 WORKDIR /app
@@ -351,6 +367,7 @@ CMD ["python3", "bot.py"]
 ```
 
 **استفاده از PM2:**
+
 ```bash
 npm install -g pm2
 pm2 start bot.py --interpreter python3 --name spotify-bot
@@ -414,7 +431,6 @@ python3 -m pytest tests/
 - **SpotDL**: برای کتابخانه عالی دانلود اسپاتیفای
 - **pyTelegramBotAPI**: برای فریمورک قوی ربات تلگرام
 - **مشارکت‌کنندگان**: تشکر از همه کسانی که در این پروژه مشارکت کرده‌اند
-
 
 <div align="center">
 
