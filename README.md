@@ -1,5 +1,15 @@
 # 🎵 Spotify Downloader Bot
 
+<p align="center">
+  <a href="#">
+        <img src="https://badges.strrl.dev/visits/power0matin/Telegram-Music-Downloader-Bot?style=flat&labelColor=333333&logoColor=E7E7E7&label=Visits&logo=github" />
+  </a>
+  <a href="#">
+    <img src="https://img.shields.io/github/stars/power0matin/Telegram-Music-Downloader-Bot?style=flat&labelColor=333333&logoColor=E7E7E7&color=EEAA00&label=Stars&logo=github"/>
+  </a>
+</p>
+
+
 <div align="center">
 
 ![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge&logo=telegram)
