@@ -61,6 +61,10 @@
 - **Type Hints**: Full type annotation support
 - **Documentation**: Comprehensive code documentation
 - **Extensible Design**: Easy to add new features
+  
+> ### ⚠️ Important: Run Spotify API Test Script Before Using the Bot
+> Before running the bot, please run the [Spotify-API-Test](https://github.com/power0matin/Spotify-API-Test) script to verify your Spotify API connectivity.
+
 
 <a name="quick-start"></a>
 
