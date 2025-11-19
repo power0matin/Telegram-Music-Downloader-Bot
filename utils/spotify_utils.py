@@ -33,30 +33,30 @@ class SpotifyURLValidator:
     This class handles validation, sanitization, and parsing of Spotify URLs.
     """
 
-    # Comprehensive Spotify URL patterns
+    # Comprehensive Spotify URL patterns (compatible with new intl-* URLs)
     SPOTIFY_PATTERNS = {
         SpotifyType.TRACK: [
             r"https?://open\.spotify\.com/track/([a-zA-Z0-9]{22})",
             r"https?://spotify\.com/track/([a-zA-Z0-9]{22})",
-            r"https?://open\.spotify\.com/(?:[a-z]{2}/)?track/([a-zA-Z0-9]{22})",
+            r"https?://open\.spotify\.com/(?:[a-zA-Z-]+/)?track/([a-zA-Z0-9]{22})",
             r"spotify:track:([a-zA-Z0-9]{22})",
         ],
         SpotifyType.ALBUM: [
             r"https?://open\.spotify\.com/album/([a-zA-Z0-9]{22})",
             r"https?://spotify\.com/album/([a-zA-Z0-9]{22})",
-            r"https?://open\.spotify\.com/(?:[a-z]{2}/)?album/([a-zA-Z0-9]{22})",
+            r"https?://open\.spotify\.com/(?:[a-zA-Z-]+/)?album/([a-zA-Z0-9]{22})",
             r"spotify:album:([a-zA-Z0-9]{22})",
         ],
         SpotifyType.PLAYLIST: [
             r"https?://open\.spotify\.com/playlist/([a-zA-Z0-9]{22})",
             r"https?://spotify\.com/playlist/([a-zA-Z0-9]{22})",
-            r"https?://open\.spotify\.com/(?:[a-z]{2}/)?playlist/([a-zA-Z0-9]{22})",
+            r"https?://open\.spotify\.com/(?:[a-zA-Z-]+/)?playlist/([a-zA-Z0-9]{22})",
             r"spotify:playlist:([a-zA-Z0-9]{22})",
         ],
         SpotifyType.ARTIST: [
             r"https?://open\.spotify\.com/artist/([a-zA-Z0-9]{22})",
             r"https?://spotify\.com/artist/([a-zA-Z0-9]{22})",
-            r"https?://open\.spotify\.com/(?:[a-z]{2}/)?artist/([a-zA-Z0-9]{22})",
+            r"https?://open\.spotify\.com/(?:[a-zA-Z-]+/)?artist/([a-zA-Z0-9]{22})",
             r"spotify:artist:([a-zA-Z0-9]{22})",
         ],
     }

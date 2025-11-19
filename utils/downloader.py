@@ -115,16 +115,26 @@ class SpotifyDownloader:
 
     def _install_ffmpeg(self) -> bool:
         """
-        Attempt to install FFmpeg (Linux only).
+        Attempt to install FFmpeg on Debian-based Linux systems.
 
         Returns:
-            True if installation successful
+            True if installation successful.
 
         Raises:
-            DependencyError: If installation fails
+            DependencyError: If installation fails or platform is unsupported.
         """
+        import platform
+
+        system = platform.system().lower()
+        if system != "linux":
+            # Do not try to run apt-get on non-Linux systems
+            raise DependencyError(
+                "Automatic FFmpeg installation is only supported on Linux. "
+                "Please install FFmpeg manually on this server."
+            )
+
         try:
-            logger.info("Attempting to install FFmpeg...")
+            logger.info("Attempting to install FFmpeg via apt-get...")
 
             # Update package list
             subprocess.run(["sudo", "apt-get", "update"], check=True, timeout=60)
@@ -138,13 +148,11 @@ class SpotifyDownloader:
             if self._is_ffmpeg_installed():
                 logger.info("FFmpeg installed successfully")
                 return True
-            else:
-                raise DependencyError("FFmpeg installation verification failed")
 
-        except subprocess.CalledProcessError as e:
+            raise DependencyError("FFmpeg installation verification failed")
+
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             raise DependencyError(f"Failed to install FFmpeg: {e}")
-        except subprocess.TimeoutExpired:
-            raise DependencyError("FFmpeg installation timed out")
 
     def _get_user_download_dir(self, user_id: int) -> str:
         """
@@ -418,9 +426,11 @@ def download_and_send(bot: TeleBot, message: Message, spotify_url: str, quality:
                 downloader._install_ffmpeg()
                 bot.send_message(user_id, messages.get("ffmpeg_installed"))
             except DependencyError as e:
-                bot.send_message(
-                    user_id, messages.get("ffmpeg_install_failed", error=str(e))
+                template = messages.get(
+                    "ffmpeg_install_failed",
+                    "❌ Failed to install FFmpeg: {}",
                 )
+                bot.send_message(user_id, template.format(str(e)))
                 return
 
         # Start download
