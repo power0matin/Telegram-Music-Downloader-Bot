@@ -5,6 +5,8 @@ This module handles Spotify URL processing with rate limiting,
 validation, and improved user experience.
 """
 
+from __future__ import annotations
+
 import hashlib
 import time
 from typing import Dict, Optional
@@ -12,26 +14,32 @@ from typing import Dict, Optional
 from telebot import TeleBot
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
-from utils.logging_config import setup_logging, log_user_action
+from config import config
 from utils.i18n import get_messages
+from utils.logging_config import setup_logging, log_user_action
+from utils.queue_functions import add_to_queue
 from utils.rate_limiter import check_rate_limit
 from utils.spotify_utils import (
     validate_spotify_url,
     sanitize_spotify_url,
     get_spotify_metadata,
+    get_canonical_spotify_url,
 )
-from utils.queue_functions import add_to_queue
-from config import config
 
 logger = setup_logging(__name__)
 
 
 class LinkStore:
     """
-    Enhanced link storage with expiration and cleanup.
+    In-memory link storage with expiration and basic cleanup.
+
+    Stores:
+        - canonical Spotify URL
+        - user id
+        - optional metadata snapshot
     """
 
-    def __init__(self, expiry_seconds: int = 3600):
+    def __init__(self, expiry_seconds: int = 3600) -> None:
         """
         Initialize link store.
 
@@ -52,19 +60,20 @@ class LinkStore:
         Returns:
             Unique link ID
         """
-        # Include user ID and timestamp for better uniqueness
         data = f"{link}:{user_id}:{int(time.time())}"
-        return hashlib.md5(data.encode()).hexdigest()[:12]
+        return hashlib.md5(data.encode("utf-8")).hexdigest()[:12]
 
-    def store_link(self, link_id: str, link: str, user_id: int, metadata: Dict = None):
+    def store_link(
+        self, link_id: str, link: str, user_id: int, metadata: Optional[Dict] = None
+    ) -> None:
         """
         Store link with metadata and expiry.
 
         Args:
             link_id: Unique link identifier
-            link: Spotify URL
+            link: Canonical Spotify URL
             user_id: User ID
-            metadata: Optional metadata
+            metadata: Optional metadata snapshot
         """
         self.store[link_id] = {
             "link": link,
@@ -73,10 +82,11 @@ class LinkStore:
             "created_at": time.time(),
         }
 
-        # Clean up expired links
         self._cleanup_expired()
 
-    def retrieve_link(self, link_id: str, user_id: int = None) -> Optional[Dict]:
+    def retrieve_link(
+        self, link_id: str, user_id: Optional[int] = None
+    ) -> Optional[Dict]:
         """
         Retrieve link information.
 
@@ -93,13 +103,12 @@ class LinkStore:
         if not link_data:
             return None
 
-        # Validate user if provided
-        if user_id and link_data["user_id"] != user_id:
+        if user_id is not None and link_data["user_id"] != user_id:
             return None
 
         return link_data
 
-    def _cleanup_expired(self):
+    def _cleanup_expired(self) -> None:
         """Remove expired links."""
         current_time = time.time()
         expired_keys = [
@@ -109,17 +118,17 @@ class LinkStore:
         ]
 
         for key in expired_keys:
-            del self.store[key]
+            self.store.pop(key, None)
 
         if expired_keys:
-            logger.debug(f"Cleaned up {len(expired_keys)} expired links")
+            logger.debug("Cleaned up %d expired links", len(expired_keys))
 
 
 # Global link store instance
 link_store = LinkStore()
 
 
-def register_spotify_handler(bot: TeleBot):
+def register_spotify_handler(bot: TeleBot) -> None:
     """
     Register Spotify URL message handler.
 
@@ -128,64 +137,72 @@ def register_spotify_handler(bot: TeleBot):
     """
 
     @bot.message_handler(func=lambda message: _is_spotify_message(message))
-    def handle_spotify_url(message: Message):
+    def handle_spotify_url(message: Message) -> None:
         """Handle Spotify URL messages."""
         user_id = message.from_user.id
         chat_id = message.chat.id
 
-        # Get user's language
         messages = get_messages(user_id)
 
-        # Check rate limit
+        # Rate limiting
         is_allowed, time_until_allowed = check_rate_limit(user_id)
         if not is_allowed:
             log_user_action(
-                logger, user_id, "Rate limited", f"Wait: {time_until_allowed:.1f}s"
+                logger,
+                user_id,
+                "Rate limited",
+                f"Wait: {time_until_allowed:.1f}s",
             )
             bot.reply_to(message, messages.get("rate_limit_exceeded"))
             return
 
-        # Extract and validate URL
-        text = message.text.strip()
-
-        # Sanitize URL
-        clean_url = sanitize_spotify_url(text)
-
-        # Validate URL
-        if not validate_spotify_url(clean_url):
-            log_user_action(logger, user_id, "Invalid URL", clean_url[:50])
+        raw_text = (message.text or "").strip()
+        if not raw_text:
             bot.reply_to(message, messages.get("invalid_url"))
             return
 
-        # Log valid URL processing
-        log_user_action(logger, user_id, "Valid Spotify URL", clean_url[:50])
+        # Sanitize URL (strip query params, normalize)
+        sanitized_url = sanitize_spotify_url(raw_text)
 
-        # Get metadata (non-blocking)
+        # Validate URL
+        if not validate_spotify_url(sanitized_url):
+            log_user_action(logger, user_id, "Invalid URL", sanitized_url[:50])
+            bot.reply_to(message, messages.get("invalid_url"))
+            return
+
+        # Canonical URL for storage / logging / download
+        canonical_url = get_canonical_spotify_url(sanitized_url) or sanitized_url
+
+        log_user_action(logger, user_id, "Valid Spotify URL", canonical_url[:50])
+
+        # Fetch metadata (best effort, non-critical)
         try:
-            metadata = get_spotify_metadata(clean_url)
-        except Exception as e:
-            logger.warning(f"Failed to get metadata for {clean_url}: {e}")
-            metadata = {"valid": False, "error": str(e)}
+            metadata = get_spotify_metadata(canonical_url)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to get metadata for %s: %s", canonical_url, exc)
+            metadata = {"valid": False, "error": str(exc)}
 
-        # Generate link ID and store
-        link_id = link_store.generate_link_id(clean_url, user_id)
-        link_store.store_link(link_id, clean_url, user_id, metadata)
+        # Store link
+        link_id = link_store.generate_link_id(canonical_url, user_id)
+        link_store.store_link(link_id, canonical_url, user_id, metadata)
 
         # Add to queue for tracking
-        add_to_queue(clean_url, chat_id)
+        add_to_queue(canonical_url, chat_id)
 
-        # Create quality selection keyboard
+        # Inline keyboard for quality selection
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(
             InlineKeyboardButton(
-                messages.get("quality_128"), callback_data=f"quality|128|{link_id}"
+                messages.get("quality_128"),
+                callback_data=f"quality|128|{link_id}",
             ),
             InlineKeyboardButton(
-                messages.get("quality_320"), callback_data=f"quality|320|{link_id}"
+                messages.get("quality_320"),
+                callback_data=f"quality|320|{link_id}",
             ),
         )
 
-        # Prepare response message with metadata if available
+        # Prepare response text with metadata
         response_text = messages.get("link_detected")
         if metadata.get("valid") and metadata.get("title"):
             title = metadata.get("title", "Unknown")
@@ -194,51 +211,50 @@ def register_spotify_handler(bot: TeleBot):
             if artist:
                 response_text += f"\n👤 {artist}"
 
-        bot.reply_to(message, response_text, reply_markup=markup, parse_mode="Markdown")
+        bot.reply_to(
+            message,
+            response_text,
+            reply_markup=markup,
+            parse_mode="Markdown",
+        )
 
     @bot.message_handler(
         func=lambda message: bool(getattr(message, "text", None))
         and not _is_spotify_message(message)
         and not message.text.startswith("/")
     )
-    def handle_non_spotify_message(message: Message):
+    def handle_non_spotify_message(message: Message) -> None:
         """Handle non-Spotify messages."""
         user_id = message.from_user.id
-
-        # Get user's language
         messages = get_messages(user_id)
 
-        # Check if message contains text
         if not message.text:
             bot.reply_to(message, messages.get("text_only"))
             return
 
-        # Check if it might be a URL but not Spotify
         text = message.text.strip()
         if text.startswith("http"):
             log_user_action(logger, user_id, "Non-Spotify URL", text[:50])
             bot.reply_to(message, messages.get("invalid_url"))
         else:
-            # Send welcome message for non-URL text
             bot.reply_to(message, messages.get("welcome"))
 
 
 def _is_spotify_message(message: Message) -> bool:
     """
-    Check if message contains a Spotify URL.
+    Quick check if message text looks like a Spotify URL/URI.
 
-    Args:
-        message: Telegram message
-
-    Returns:
-        True if message contains Spotify URL
+    Note: This is a cheap filter; full validation is done later.
     """
-    if not message.text:
+    text = getattr(message, "text", None)
+    if not text:
         return False
 
-    text = message.text.strip().lower()
-    return any(
-        pattern in text for pattern in ["open.spotify.com", "spotify.com", "spotify:"]
+    lowered = text.strip().lower()
+    return (
+        "open.spotify.com" in lowered
+        or "spotify.com" in lowered
+        or lowered.startswith("spotify:")
     )
 
 

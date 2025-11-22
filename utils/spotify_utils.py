@@ -4,12 +4,14 @@ Spotify URL validation and metadata extraction utilities.
 This module provides utilities for validating Spotify URLs and extracting metadata.
 """
 
+from __future__ import annotations
+
 import re
-import requests
-import json
-from urllib.parse import urlparse, parse_qs
-from typing import Optional, Dict, Any, Tuple
 from enum import Enum
+from typing import Optional, Dict, Any, Tuple
+from urllib.parse import urlparse
+
+import requests
 
 from utils.logging_config import setup_logging
 
@@ -33,64 +35,72 @@ class SpotifyURLValidator:
     This class handles validation, sanitization, and parsing of Spotify URLs.
     """
 
-    # Comprehensive Spotify URL patterns (compatible with new intl-* URLs)
-    SPOTIFY_PATTERNS = {
+    # Base62 ID used by Spotify: 22 characters [A-Za-z0-9]
+    _ID_PATTERN = r"([A-Za-z0-9]{22})"
+
+    # Comprehensive Spotify URL patterns (compatible with intl-* URLs and URIs)
+    _PATTERN_STRINGS = {
         SpotifyType.TRACK: [
-            r"https?://open\.spotify\.com/track/([a-zA-Z0-9]{22})",
-            r"https?://spotify\.com/track/([a-zA-Z0-9]{22})",
-            r"https?://open\.spotify\.com/(?:[a-zA-Z-]+/)?track/([a-zA-Z0-9]{22})",
-            r"spotify:track:([a-zA-Z0-9]{22})",
+            rf"https?://open\.spotify\.com/track/{_ID_PATTERN}",
+            rf"https?://spotify\.com/track/{_ID_PATTERN}",
+            rf"https?://open\.spotify\.com/(?:[A-Za-z-]+/)?track/{_ID_PATTERN}",
+            rf"spotify:track:{_ID_PATTERN}",
         ],
         SpotifyType.ALBUM: [
-            r"https?://open\.spotify\.com/album/([a-zA-Z0-9]{22})",
-            r"https?://spotify\.com/album/([a-zA-Z0-9]{22})",
-            r"https?://open\.spotify\.com/(?:[a-zA-Z-]+/)?album/([a-zA-Z0-9]{22})",
-            r"spotify:album:([a-zA-Z0-9]{22})",
+            rf"https?://open\.spotify\.com/album/{_ID_PATTERN}",
+            rf"https?://spotify\.com/album/{_ID_PATTERN}",
+            rf"https?://open\.spotify\.com/(?:[A-Za-z-]+/)?album/{_ID_PATTERN}",
+            rf"spotify:album:{_ID_PATTERN}",
         ],
         SpotifyType.PLAYLIST: [
-            r"https?://open\.spotify\.com/playlist/([a-zA-Z0-9]{22})",
-            r"https?://spotify\.com/playlist/([a-zA-Z0-9]{22})",
-            r"https?://open\.spotify\.com/(?:[a-zA-Z-]+/)?playlist/([a-zA-Z0-9]{22})",
-            r"spotify:playlist:([a-zA-Z0-9]{22})",
+            rf"https?://open\.spotify\.com/playlist/{_ID_PATTERN}",
+            rf"https?://spotify\.com/playlist/{_ID_PATTERN}",
+            rf"https?://open\.spotify\.com/(?:[A-Za-z-]+/)?playlist/{_ID_PATTERN}",
+            rf"spotify:playlist:{_ID_PATTERN}",
         ],
         SpotifyType.ARTIST: [
-            r"https?://open\.spotify\.com/artist/([a-zA-Z0-9]{22})",
-            r"https?://spotify\.com/artist/([a-zA-Z0-9]{22})",
-            r"https?://open\.spotify\.com/(?:[a-zA-Z-]+/)?artist/([a-zA-Z0-9]{22})",
-            r"spotify:artist:([a-zA-Z0-9]{22})",
+            rf"https?://open\.spotify\.com/artist/{_ID_PATTERN}",
+            rf"https?://spotify\.com/artist/{_ID_PATTERN}",
+            rf"https?://open\.spotify\.com/(?:[A-Za-z-]+/)?artist/{_ID_PATTERN}",
+            rf"spotify:artist:{_ID_PATTERN}",
         ],
+    }
+
+    # Compile regex patterns once at import time for better performance
+    SPOTIFY_PATTERNS = {
+        content_type: [re.compile(pattern) for pattern in patterns]
+        for content_type, patterns in _PATTERN_STRINGS.items()
     }
 
     @classmethod
     def sanitize_url(cls, url: str) -> str:
         """
-        Sanitize and normalize a Spotify URL.
+        Sanitize and normalize a Spotify URL/URI.
+
+        - Strips whitespace
+        - Removes query parameters and fragments for http(s) URLs
+        - Leaves spotify: URIs as-is
 
         Args:
             url: Raw URL string
 
         Returns:
-            Sanitized URL string
+            Sanitized URL string (may still be invalid as a Spotify URL)
         """
         if not url:
             return ""
 
-        # Remove common junk from URLs
         url = url.strip()
 
-        # Remove query parameters and fragments that might cause issues
+        # spotify:track:... یا spotify:album:...
+        if url.lower().startswith("spotify:"):
+            return url
+
         parsed = urlparse(url)
 
-        # Reconstruct clean URL
-        if parsed.netloc and parsed.path:
-            # Extract just the core URL without tracking parameters
+        if parsed.scheme and parsed.netloc and parsed.path:
+            # Reconstruct without query/fragment
             clean_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-
-            # Handle special cases for sharing URLs
-            if "?si=" in url:
-                # Remove Spotify sharing tracking
-                clean_url = url.split("?si=")[0]
-
             return clean_url
 
         return url
@@ -101,7 +111,7 @@ class SpotifyURLValidator:
         Validate Spotify URL and extract information.
 
         Args:
-            url: Spotify URL to validate
+            url: Spotify URL/URI to validate
 
         Returns:
             Tuple of (is_valid, content_type, spotify_id)
@@ -109,28 +119,29 @@ class SpotifyURLValidator:
         if not url:
             return False, SpotifyType.UNKNOWN, None
 
-        # Sanitize the URL first
         clean_url = cls.sanitize_url(url)
 
-        # Try to match against all patterns
         for content_type, patterns in cls.SPOTIFY_PATTERNS.items():
             for pattern in patterns:
-                match = re.match(pattern, clean_url)
+                match = pattern.fullmatch(clean_url)
                 if match:
                     spotify_id = match.group(1)
-                    logger.debug(f"Matched {content_type.value} with ID: {spotify_id}")
+                    logger.debug(
+                        "Matched %s with ID: %s",
+                        content_type.value,
+                        spotify_id,
+                    )
                     return True, content_type, spotify_id
 
-        # Check for malformed but potentially valid URLs
         if "spotify" in clean_url.lower():
-            logger.warning(f"Potentially malformed Spotify URL: {clean_url}")
+            logger.warning("Potentially malformed Spotify URL: %s", clean_url)
 
         return False, SpotifyType.UNKNOWN, None
 
     @classmethod
     def is_valid_spotify_url(cls, url: str) -> bool:
         """
-        Quick check if URL is a valid Spotify URL.
+        Quick check if URL is a valid Spotify URL of a known type.
 
         Args:
             url: URL to check
@@ -144,17 +155,20 @@ class SpotifyURLValidator:
     @classmethod
     def get_canonical_url(cls, url: str) -> Optional[str]:
         """
-        Get canonical Spotify URL from any valid Spotify URL.
+        Get canonical Spotify URL from any valid Spotify URL/URI.
+
+        Canonical form:
+            https://open.spotify.com/<type>/<id>
 
         Args:
-            url: Spotify URL
+            url: Spotify URL/URI
 
         Returns:
             Canonical open.spotify.com URL or None if invalid
         """
         is_valid, content_type, spotify_id = cls.validate_and_parse(url)
 
-        if not is_valid or content_type == SpotifyType.UNKNOWN:
+        if not is_valid or content_type == SpotifyType.UNKNOWN or not spotify_id:
             return None
 
         return f"https://open.spotify.com/{content_type.value}/{spotify_id}"
@@ -162,17 +176,23 @@ class SpotifyURLValidator:
 
 class SpotifyMetadataExtractor:
     """
-    Extract metadata from Spotify URLs using public APIs.
+    Extract metadata from Spotify URLs using public endpoints.
 
-    Note: This is a basic implementation. For production use with high volume,
-    you should use the official Spotify Web API with proper authentication.
+    For reliability, this uses the official oEmbed endpoint where possible,
+    with a lightweight HTML fallback if required.
     """
 
-    def __init__(self):
+    OEMBED_URL = "https://open.spotify.com/oembed"
+
+    def __init__(self) -> None:
         self.session = requests.Session()
         self.session.headers.update(
             {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/124.0 Safari/537.36"
+                )
             }
         )
 
@@ -181,21 +201,23 @@ class SpotifyMetadataExtractor:
         Extract basic metadata from Spotify URL.
 
         Args:
-            url: Spotify URL
+            url: Spotify URL/URI
 
         Returns:
             Dictionary with extracted metadata
         """
         is_valid, content_type, spotify_id = SpotifyURLValidator.validate_and_parse(url)
 
-        if not is_valid:
+        if not is_valid or not spotify_id:
             return {"valid": False, "error": "Invalid Spotify URL"}
 
-        metadata = {
+        canonical_url = SpotifyURLValidator.get_canonical_url(url)
+
+        metadata: Dict[str, Any] = {
             "valid": True,
             "type": content_type.value,
             "id": spotify_id,
-            "url": SpotifyURLValidator.get_canonical_url(url),
+            "url": canonical_url,
             "title": None,
             "artist": None,
             "album": None,
@@ -204,39 +226,73 @@ class SpotifyMetadataExtractor:
             "external_urls": {},
         }
 
+        # 1) Try oEmbed endpoint (JSON, stable)
         try:
-            # Try to get metadata from Spotify's embed API
+            resp = self.session.get(
+                self.OEMBED_URL,
+                params={"url": canonical_url},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+
+                # Example oEmbed fields: title, author_name, thumbnail_url, provider_url, etc.
+                metadata["title"] = data.get("title")
+                metadata["image_url"] = data.get("thumbnail_url")
+                metadata["external_urls"]["spotify"] = canonical_url
+
+                author_name = data.get("author_name")
+                if content_type == SpotifyType.TRACK and author_name:
+                    # Often "Artist" or "Artist, Other Artist"
+                    metadata["artist"] = author_name
+
+                logger.debug(
+                    "Extracted metadata via oEmbed for %s: %s",
+                    content_type.value,
+                    metadata["title"],
+                )
+                return metadata
+            else:
+                logger.warning(
+                    "oEmbed request failed for %s (status %s)",
+                    canonical_url,
+                    resp.status_code,
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("oEmbed metadata fetch failed for %s: %s", url, exc)
+
+        # 2) Fallback: embed page HTML scraping for minimal info
+        try:
             embed_url = (
                 f"https://open.spotify.com/embed/{content_type.value}/{spotify_id}"
             )
-
             response = self.session.get(embed_url, timeout=10)
+
             if response.status_code == 200:
-                # Parse basic info from embed page
                 html_content = response.text
 
-                # Extract title from meta tags
+                # Title from og:title
                 title_match = re.search(
                     r'<meta property="og:title" content="([^"]*)"', html_content
                 )
                 if title_match:
                     metadata["title"] = title_match.group(1)
 
-                # Extract description (often contains artist info)
+                # Description often contains artist/album
                 desc_match = re.search(
-                    r'<meta property="og:description" content="([^"]*)"', html_content
+                    r'<meta property="og:description" content="([^"]*)"',
+                    html_content,
                 )
                 if desc_match:
                     description = desc_match.group(1)
                     if content_type == SpotifyType.TRACK and "·" in description:
-                        # For tracks, description is usually "Artist · Album"
-                        parts = description.split("·")
+                        parts = [p.strip() for p in description.split("·")]
                         if len(parts) >= 1:
-                            metadata["artist"] = parts[0].strip()
+                            metadata["artist"] = parts[0] or None
                         if len(parts) >= 2:
-                            metadata["album"] = parts[1].strip()
+                            metadata["album"] = parts[1] or None
 
-                # Extract image URL
+                # Image
                 image_match = re.search(
                     r'<meta property="og:image" content="([^"]*)"', html_content
                 )
@@ -244,18 +300,20 @@ class SpotifyMetadataExtractor:
                     metadata["image_url"] = image_match.group(1)
 
                 logger.debug(
-                    f"Extracted metadata for {content_type.value}: {metadata['title']}"
+                    "Extracted metadata via HTML for %s: %s",
+                    content_type.value,
+                    metadata["title"],
                 )
 
-        except Exception as e:
-            logger.warning(f"Failed to extract metadata for {url}: {e}")
-            metadata["error"] = f"Failed to extract metadata: {str(e)}"
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to extract metadata for %s: %s", url, exc)
+            metadata["error"] = f"Failed to extract metadata: {exc}"
 
         return metadata
 
     def get_track_info(self, url: str) -> Dict[str, Any]:
         """
-        Get detailed track information.
+        Get detailed track information (currently thin wrapper over extract_metadata).
 
         Args:
             url: Spotify track URL
@@ -265,10 +323,10 @@ class SpotifyMetadataExtractor:
         """
         metadata = self.extract_metadata(url)
 
-        if not metadata["valid"] or metadata["type"] != "track":
+        if not metadata.get("valid") or metadata.get("type") != "track":
             return metadata
 
-        # Add track-specific processing here if needed
+        # Future: add track-specific processing here
         return metadata
 
 
@@ -321,7 +379,7 @@ def get_canonical_spotify_url(url: str) -> Optional[str]:
     Convenience function to get canonical Spotify URL.
 
     Args:
-        url: Spotify URL
+        url: Spotify URL/URI
 
     Returns:
         Canonical URL or None if invalid
