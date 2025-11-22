@@ -176,7 +176,7 @@ class SpotifyDownloader:
 
         Args:
             spotify_url: Spotify URL to download
-            output_dir: Output directory
+            output_dir: Output directory (per-user)
             quality: Audio quality (128 or 320)
 
         Returns:
@@ -186,21 +186,28 @@ class SpotifyDownloader:
         if quality not in [128, 320]:
             quality = config.default_quality
 
+        # spotdl expects values like 128k, 320k
         bitrate = f"{quality}k"
 
-        # Build command
+        # downloads/USER_ID/Artist - Title.mp3
+        output_template = os.path.join(
+            output_dir,
+            "{artists} - {title}.{output-ext}",
+        )
+
+        # Build command for modern spotdl CLI:
+        # spotdl --bitrate 320k --format mp3 --output "downloads/UID/{artists} - {title}.{output-ext}" URL
         command = [
             "spotdl",
-            "download",
-            spotify_url,
             "--bitrate",
             bitrate,
-            "--output",
-            output_dir,
             "--format",
             "mp3",
+            "--output",
+            output_template,
             "--overwrite",
             "skip",  # Skip if file already exists
+            spotify_url,
         ]
 
         return command
@@ -285,15 +292,38 @@ class SpotifyDownloader:
         Returns:
             List of file information dictionaries
         """
-        files = []
+        files: List[Dict[str, Any]] = []
+
+        # پسوندهایی که قبول می‌کنیم (در عمل باید mp3 باشد، ولی برای سازگاری بیشتر)
+        allowed_exts = (".mp3", ".m4a", ".flac", ".opus", ".ogg")
 
         try:
-            for filename in os.listdir(download_dir):
-                if filename.endswith(".mp3"):
-                    file_path = os.path.join(download_dir, filename)
-                    file_stat = os.stat(file_path)
+            if not os.path.isdir(download_dir):
+                logger.warning(
+                    f"Download directory does not exist or is not a directory: {download_dir}"
+                )
+                return []
 
-                    # Check file size
+            # به صورت ریکرسیو در همه‌ی زیرپوشه‌ها بگرد
+            for root, _, filenames in os.walk(download_dir):
+                for filename in filenames:
+                    if not filename.lower().endswith(allowed_exts):
+                        continue
+
+                    file_path = os.path.join(root, filename)
+
+                    try:
+                        file_stat = os.stat(file_path)
+                    except OSError as e:
+                        logger.warning(f"Skipping file {file_path}: {e}")
+                        continue
+
+                    # صفر بایت = خراب / ناقص
+                    if file_stat.st_size == 0:
+                        logger.warning(f"Skipping zero-size file {filename}")
+                        continue
+
+                    # چک حداکثر سایز
                     if file_stat.st_size > self.max_file_size:
                         logger.warning(f"File {filename} exceeds size limit")
                         continue
@@ -310,11 +340,21 @@ class SpotifyDownloader:
                         f"Processed file: {filename} ({file_info['size_mb']:.2f}MB)"
                     )
 
+            if not files:
+                try:
+                    top_level = os.listdir(download_dir)
+                except Exception:
+                    top_level = "unavailable"
+
+                logger.warning(
+                    f"No audio files found under {download_dir}. Top-level contents: {top_level}"
+                )
+
+            return files
+
         except Exception as e:
             logger.error(f"Error processing downloaded files: {e}")
             raise DownloadError(f"Error processing downloaded files: {e}")
-
-        return files
 
     def download(
         self, spotify_url: str, user_id: int, quality: int = None
@@ -438,11 +478,15 @@ def download_and_send(bot: TeleBot, message: Message, spotify_url: str, quality:
 
         if not result.success:
             # Send appropriate error message
-            if "Rate limit" in result.error:
+            error_text = (result.error or "").lower()
+
+            if "rate limit" in error_text:
                 bot.send_message(user_id, messages.get("retry_failed"))
-            elif "not found" in result.error or "unavailable" in result.error:
+            elif "not found" in error_text or "unavailable" in error_text:
                 bot.send_message(user_id, messages.get("no_files_downloaded"))
-            elif "timed out" in result.error:
+            elif "no files were downloaded" in error_text:
+                bot.send_message(user_id, messages.get("no_files_downloaded"))
+            elif "timed out" in error_text:
                 bot.send_message(user_id, messages.get("download_timeout"))
             else:
                 bot.send_message(user_id, messages.get("unexpected_error"))
