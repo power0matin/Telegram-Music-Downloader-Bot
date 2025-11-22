@@ -197,7 +197,8 @@ def register_spotify_handler(bot: TeleBot):
         bot.reply_to(message, response_text, reply_markup=markup, parse_mode="Markdown")
 
     @bot.message_handler(
-        func=lambda message: not _is_spotify_message(message)
+        func=lambda message: bool(getattr(message, "text", None))
+        and not _is_spotify_message(message)
         and not message.text.startswith("/")
     )
     def handle_non_spotify_message(message: Message):

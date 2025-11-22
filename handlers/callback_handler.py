@@ -5,6 +5,8 @@ This module handles inline keyboard callbacks with improved error handling,
 progress updates, and multilingual support.
 """
 
+import threading
+
 from telebot import TeleBot
 from telebot.types import CallbackQuery
 
@@ -79,11 +81,13 @@ def register_callback_handlers(bot: TeleBot):
         )
 
         # Answer callback query
-        bot.answer_callback_query(call.id, messages.get("quality_selected", quality))
+        bot.answer_callback_query(
+            call.id, messages.get("quality_selected", quality=quality)
+        )
 
         # Update message to show download progress
         try:
-            progress_text = messages.get("downloading", quality)
+            progress_text = messages.get("downloading", quality=quality)
 
             # Add metadata to progress message if available
             if metadata.get("valid") and metadata.get("title"):
@@ -92,7 +96,9 @@ def register_callback_handlers(bot: TeleBot):
                 progress_text = f"🎵 **{title}**"
                 if artist:
                     progress_text += f"\n👤 {artist}"
-                progress_text += f"\n\n⏳ {messages.get('downloading', quality)}"
+                progress_text += (
+                    f"\n\n⏳ {messages.get('downloading', quality=quality)}"
+                )
 
             bot.edit_message_text(
                 chat_id=chat_id,
@@ -104,24 +110,26 @@ def register_callback_handlers(bot: TeleBot):
         except Exception as e:
             logger.error(f"Failed to update progress message: {e}")
             # Continue with download even if message update fails
-            bot.send_message(chat_id, messages.get("downloading", quality))
+            bot.send_message(chat_id, messages.get("downloading", quality=quality))
 
-        # Start download in a separate thread/process to avoid blocking
-        try:
-            download_and_send(bot, call.message, spotify_url, quality)
-        except Exception as e:
-            logger.error(f"Download failed for user {user_id}: {e}")
+        def _download_worker():
+            try:
+                download_and_send(bot, call.message, spotify_url, quality)
+            except Exception as e:
+                logger.error(f"Download failed for user {user_id}: {e}")
 
-            # Send error message
-            error_message = messages.get("unexpected_error")
-            if "rate limit" in str(e).lower():
-                error_message = messages.get("retry_failed")
-            elif "not found" in str(e).lower():
-                error_message = messages.get("no_files_downloaded")
-            elif "timeout" in str(e).lower():
-                error_message = messages.get("download_timeout")
+                # Send error message
+                error_message = messages.get("unexpected_error")
+                if "rate limit" in str(e).lower():
+                    error_message = messages.get("retry_failed")
+                elif "not found" in str(e).lower():
+                    error_message = messages.get("no_files_downloaded")
+                elif "timeout" in str(e).lower():
+                    error_message = messages.get("download_timeout")
 
-            bot.send_message(chat_id, error_message)
+                bot.send_message(chat_id, error_message)
+
+        threading.Thread(target=_download_worker, daemon=True).start()
 
     @bot.callback_query_handler(func=lambda call: True)
     def handle_unknown_callback(call: CallbackQuery):

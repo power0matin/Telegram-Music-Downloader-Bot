@@ -63,22 +63,24 @@ class Messages:
                 "❌ No audio file was downloaded. "
                 "Please check the Spotify link and try again."
             ),
-            "file_send_error": "❌ Failed to send file: {}",
+            "file_send_error": "❌ Failed to send file: {error}",
             "directory_error": "❌ Error accessing download directory.",
             "spotdl_not_installed": (
                 "❌ spotdl is not installed. " "Please contact the administrator."
             ),
             "ffmpeg_installing": "🔧 FFmpeg not found. Installing FFmpeg...",
             "ffmpeg_installed": "✅ FFmpeg installed successfully.",
-            "ffmpeg_install_failed": "❌ Failed to install FFmpeg: {}",
+            "ffmpeg_install_failed": "❌ Failed to install FFmpeg: {error}",
             # Success messages
             "link_detected": (
                 "✅ Valid Spotify link detected!\n"
                 "Please choose your preferred quality:"
             ),
-            "quality_selected": ("🎵 {} kbps quality selected. Download starting..."),
-            "downloading": "🎵 Downloading at {} kbps...\nPlease wait.",
-            "download_complete": "🎵 Downloaded: {}",
+            "quality_selected": (
+                "🎵 {quality} kbps quality selected. Download starting..."
+            ),
+            "downloading": "🎵 Downloading at {quality} kbps...\nPlease wait.",
+            "download_complete": "🎵 Downloaded: {filename}",
             "retry_attempt": (
                 "⏳ Rate limit hit. Retrying in {} seconds... " "(Attempt {}/{})"
             ),
@@ -140,24 +142,26 @@ class Messages:
                 "❌ هیچ فایل صوتی دانلود نشد. "
                 "لطفاً لینک Spotify را بررسی کرده و دوباره تلاش کنید."
             ),
-            "file_send_error": "❌ ارسال فایل ناموفق بود: {}",
+            "file_send_error": "❌ ارسال فایل ناموفق بود: {error}",
             "directory_error": "❌ خطا در دسترسی به پوشه دانلود.",
             "spotdl_not_installed": (
                 "❌ spotdl نصب نشده است. " "لطفاً با مدیر تماس بگیرید."
             ),
             "ffmpeg_installing": "🔧 FFmpeg یافت نشد. در حال نصب FFmpeg...",
             "ffmpeg_installed": "✅ FFmpeg با موفقیت نصب شد.",
-            "ffmpeg_install_failed": "❌ نصب FFmpeg ناموفق بود: {}",
+            "ffmpeg_install_failed": "❌ نصب FFmpeg ناموفق بود: {error}",
             # Success messages
             "link_detected": (
                 "✅ لینک معتبر Spotify شناسایی شد!\n"
                 "لطفاً کیفیت مورد نظر خود را انتخاب کنید:"
             ),
             "quality_selected": (
-                "🎵 کیفیت {} کیلوبیت بر ثانیه انتخاب شد. دانلود شروع می‌شود..."
+                "🎵 کیفیت {quality} کیلوبیت بر ثانیه انتخاب شد. دانلود شروع می‌شود..."
             ),
-            "downloading": "🎵 در حال دانلود با کیفیت {} kbps...\nلطفاً صبر کنید.",
-            "download_complete": "🎵 دانلود شد: {}",
+            "downloading": (
+                "🎵 در حال دانلود با کیفیت {quality} kbps...\nلطفاً صبر کنید."
+            ),
+            "download_complete": "🎵 دانلود شد: {filename}",
             "retry_attempt": (
                 "⏳ به حد مجاز رسیده. تلاش مجدد در {} ثانیه... " "(تلاش {}/{})"
             ),
