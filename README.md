@@ -312,11 +312,16 @@ MIT — see [LICENSE](LICENSE).
 This bot is for educational use only. You are responsible for complying with Spotify’s Terms of Service and copyright laws. The authors assume no liability for misuse.
 
 
-## 📞 Support
+## 📬 Contact & Support
+
+**Matin Shahabadi (متین شاه‌آبادی / متین شاه آبادی)**
 
 * 🐛 Issues: [https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues)
-* 📧 Email: [power0matin@gmail.com](mailto:power0matin@gmail.com)
 * 💬 Telegram: [@power0matin](https://t.me/power0matin)
+* 🌐 Website: [matinshahabadi.ir](https://matinshahabadi.ir)
+* 📧 Email: [me@matinshahabadi.ir](mailto:me@matinshahabadi.ir)
+* 🧑‍💻 GitHub: [power0matin](https://github.com/power0matin)
+* 💼 LinkedIn: [matin-shahabadi](https://www.linkedin.com/in/matin-shahabadi)
 
 
 <div align="center">
