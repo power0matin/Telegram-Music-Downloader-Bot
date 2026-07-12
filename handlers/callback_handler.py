@@ -6,6 +6,7 @@ progress updates, and multilingual support.
 """
 
 import threading
+from threading import Semaphore
 
 from telebot import TeleBot
 from telebot.types import CallbackQuery
@@ -17,6 +18,9 @@ from utils.spotify_utils import validate_spotify_url
 from .spotify_handler import get_stored_link_data
 
 logger = setup_logging(__name__)
+
+# Limit concurrent downloads to prevent DoS
+_download_semaphore = Semaphore(5)
 
 
 def register_callback_handlers(bot: TeleBot):
@@ -52,14 +56,14 @@ def register_callback_handlers(bot: TeleBot):
                 raise ValueError("Invalid quality value")
 
         except (ValueError, IndexError) as e:
-            logger.warning(f"Invalid callback data from user {user_id}: {call.data}")
+            logger.warning("Invalid callback data from user %s: %s", user_id, call.data)
             bot.answer_callback_query(call.id, messages.get("invalid_callback"))
             return
 
         # Retrieve stored link data
         link_data = get_stored_link_data(link_id, user_id)
         if not link_data:
-            logger.warning(f"Link not found for user {user_id}, link_id: {link_id}")
+            logger.warning("Link not found for user %s, link_id: %s", user_id, link_id)
             bot.answer_callback_query(call.id, messages.get("link_not_found"))
             return
 
@@ -68,7 +72,7 @@ def register_callback_handlers(bot: TeleBot):
 
         # Validate URL again (security check)
         if not validate_spotify_url(spotify_url):
-            logger.warning(f"Invalid Spotify URL in callback: {spotify_url}")
+            logger.warning("Invalid Spotify URL in callback: %s", spotify_url)
             bot.answer_callback_query(call.id, messages.get("invalid_spotify_link"))
             return
 
@@ -108,26 +112,27 @@ def register_callback_handlers(bot: TeleBot):
                 parse_mode="Markdown",
             )
         except Exception as e:
-            logger.error(f"Failed to update progress message: {e}")
+            logger.error("Failed to update progress message: %s", e)
             # Continue with download even if message update fails
             bot.send_message(chat_id, messages.get("downloading", quality=quality))
 
         def _download_worker():
-            try:
-                download_and_send(bot, call.message, spotify_url, quality)
-            except Exception as e:
-                logger.error(f"Download failed for user {user_id}: {e}")
+            with _download_semaphore:
+                try:
+                    download_and_send(bot, call.message, spotify_url, quality, user_id=user_id)
+                except Exception as e:
+                    logger.error("Download failed for user %s: %s", user_id, e)
 
-                # Send error message
-                error_message = messages.get("unexpected_error")
-                if "rate limit" in str(e).lower():
-                    error_message = messages.get("retry_failed")
-                elif "not found" in str(e).lower():
-                    error_message = messages.get("no_files_downloaded")
-                elif "timeout" in str(e).lower():
-                    error_message = messages.get("download_timeout")
+                    # Send error message
+                    error_message = messages.get("unexpected_error")
+                    if "rate limit" in str(e).lower():
+                        error_message = messages.get("retry_failed")
+                    elif "not found" in str(e).lower():
+                        error_message = messages.get("no_files_downloaded")
+                    elif "timeout" in str(e).lower():
+                        error_message = messages.get("download_timeout")
 
-                bot.send_message(chat_id, error_message)
+                    bot.send_message(chat_id, error_message)
 
         threading.Thread(target=_download_worker, daemon=True).start()
 
@@ -136,7 +141,7 @@ def register_callback_handlers(bot: TeleBot):
         """Handle unknown or invalid callbacks."""
         user_id = call.from_user.id
 
-        logger.warning(f"Unknown callback from user {user_id}: {call.data}")
+        logger.warning("Unknown callback from user %s: %s", user_id, call.data)
 
         messages = get_messages(user_id)
         bot.answer_callback_query(call.id, messages.get("invalid_callback"))

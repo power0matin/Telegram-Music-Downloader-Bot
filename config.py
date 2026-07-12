@@ -97,7 +97,7 @@ class Config:
         rate_limit_window_seconds = _get_int("RATE_LIMIT_WINDOW_SECONDS", 60)
 
         # Logging
-        log_level = _get_str("LOG_LEVEL", "INFO").upper()
+        log_level = _get_str("LOG_LEVEL", "DEBUG").upper()
 
         # Language
         supported_languages: Tuple[str, ...] = ("en", "fa")

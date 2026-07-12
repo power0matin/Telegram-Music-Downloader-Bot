@@ -58,7 +58,7 @@ def setup_logging(name: Optional[str] = None) -> logging.Logger:
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
     except Exception as e:
-        logger.warning(f"Could not set up file logging: {e}")
+        logger.warning("Could not set up file logging: %s", e)
 
     return logger
 

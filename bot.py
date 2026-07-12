@@ -10,9 +10,6 @@ import signal
 import threading
 import time
 
-# Add project root to sys.path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 from telebot import TeleBot
 
 # Import configuration and logging
@@ -68,7 +65,7 @@ class SpotifyBot:
                     cleanup_expired_rate_limits()
                     logger.debug("Performed periodic cleanup")
                 except Exception as e:
-                    logger.error(f"Error in cleanup worker: {e}")
+                    logger.error("Error in cleanup worker: %s", e)
 
                 # Wait 5 minutes
                 for _ in range(300):  # 5 minutes in seconds
@@ -84,7 +81,7 @@ class SpotifyBot:
         """Set up signal handlers for graceful shutdown."""
 
         def signal_handler(signum, frame):
-            logger.info(f"Received signal {signum}, shutting down gracefully...")
+            logger.info("Received signal %s, shutting down gracefully...", signum)
             self.stop()
             sys.exit(0)
 
@@ -110,17 +107,17 @@ class SpotifyBot:
 
             # Log bot info
             bot_info = self.bot.get_me()
-            logger.info(f"Starting bot: @{bot_info.username} ({bot_info.first_name})")
+            logger.info("Starting bot: @%s (%s)", bot_info.username, bot_info.first_name)
 
             # Log configuration
-            logger.info(f"Configuration:")
+            logger.info("Configuration:")
             logger.info(
-                f"  - Rate limit: {config.rate_limit_requests} requests per {config.rate_limit_window_seconds}s"
+                "  - Rate limit: %d requests per %ds", config.rate_limit_requests, config.rate_limit_window_seconds
             )
-            logger.info(f"  - Default quality: {config.default_quality}kbps")
-            logger.info(f"  - Max file size: {config.max_download_size_mb}MB")
+            logger.info("  - Default quality: %dkbps", config.default_quality)
+            logger.info("  - Max file size: %dMB", config.max_download_size_mb)
             logger.info(
-                f"  - Supported languages: {', '.join(config.supported_languages)}"
+                "  - Supported languages: %s", ', '.join(config.supported_languages)
             )
 
             # Start polling
@@ -130,7 +127,7 @@ class SpotifyBot:
             )
 
         except Exception as e:
-            logger.error(f"Error starting bot: {e}")
+            logger.error("Error starting bot: %s", e)
             self.stop()
             raise
 
@@ -144,7 +141,7 @@ class SpotifyBot:
             try:
                 self.bot.stop_polling()
             except Exception as e:
-                logger.error(f"Error stopping bot polling: {e}")
+                logger.error("Error stopping bot polling: %s", e)
 
         if self.cleanup_thread and self.cleanup_thread.is_alive():
             logger.info("Waiting for cleanup thread to finish...")
@@ -156,8 +153,8 @@ class SpotifyBot:
 def main():
     """Main entry point."""
     logger.info("Starting Spotify Bot...")
-    logger.info(f"Python version: {sys.version}")
-    logger.info(f"Working directory: {os.getcwd()}")
+    logger.info("Python version: %s", sys.version)
+    logger.info("Working directory: %s", os.getcwd())
 
     # Validate token
     if not BOT_TOKEN:
@@ -173,7 +170,7 @@ def main():
         logger.info("Bot interrupted by user")
         return 0
     except Exception as e:
-        logger.error(f"Fatal error: {e}", exc_info=True)
+        logger.error("Fatal error: %s", e, exc_info=True)
         return 1
 
 

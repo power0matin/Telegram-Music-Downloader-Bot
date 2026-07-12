@@ -4,8 +4,10 @@ Rate limiting system for Spotify Bot.
 This module implements rate limiting to prevent spam and abuse.
 """
 
+from __future__ import annotations
+
 import time
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from dataclasses import dataclass
 from threading import Lock
 
@@ -80,7 +82,7 @@ class RateLimiter:
 
             return True, None
 
-    def get_user_stats(self, user_id: int) -> Dict[str, any]:
+    def get_user_stats(self, user_id: int) -> Dict[str, Any]:
         """
         Get rate limit statistics for a user.
 
@@ -164,7 +166,7 @@ def check_rate_limit(user_id: int) -> tuple[bool, Optional[float]]:
     return rate_limiter.is_allowed(user_id)
 
 
-def get_rate_limit_stats(user_id: int) -> Dict[str, any]:
+def get_rate_limit_stats(user_id: int) -> Dict[str, Any]:
     """
     Convenience function to get rate limit stats for a user.
 

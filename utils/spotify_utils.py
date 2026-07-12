@@ -196,6 +196,17 @@ class SpotifyMetadataExtractor:
             }
         )
 
+    def close(self) -> None:
+        """Close the underlying requests session to release resources."""
+        self.session.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
+
     def extract_metadata(self, url: str) -> Dict[str, Any]:
         """
         Extract basic metadata from Spotify URL.

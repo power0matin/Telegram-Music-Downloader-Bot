@@ -34,9 +34,9 @@ class DownloadResult:
     """Result of a download operation."""
 
     success: bool
-    files: List[str] = None
-    error: str = None
-    metadata: Dict[str, Any] = None
+    files: Optional[List[str]] = None
+    error: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
     total_size: int = 0
 
 
@@ -84,7 +84,7 @@ class SpotifyDownloader:
             "ffmpeg": self._is_ffmpeg_installed(),
         }
 
-        logger.debug(f"Dependency check: {dependencies}")
+        logger.debug("Dependency check: %s", dependencies)
         return dependencies
 
     def _is_spotdl_installed(self) -> bool:
@@ -233,52 +233,93 @@ class SpotifyDownloader:
 
         for attempt in range(max_retries):
             try:
-                logger.debug(f"Download attempt {attempt + 1}/{max_retries}")
-
-                result = subprocess.run(
-                    command, capture_output=True, text=True, timeout=timeout
+                logger.debug(
+                    "Download attempt %s/%s - command: %s",
+                    attempt + 1,
+                    max_retries,
+                    " ".join(command),
                 )
 
+                result = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                )
+
+                stdout = result.stdout or ""
+                stderr = result.stderr or ""
+                combined = (stdout + "\n" + stderr).lower()
+
+                logger.debug(
+                    "spotdl exit code=%s, stdout(first 400)=%r, stderr(first 400)=%r",
+                    result.returncode,
+                    stdout[:400],
+                    stderr[:400],
+                )
+
+                # exit code صفر ولی با خطای provider در لاگ
                 if result.returncode == 0:
+                    if (
+                        "audioprovidererror" in combined
+                        or "yt-dlp download error" in combined
+                    ):
+                        raise DownloadError("Audio provider error (YouTube / YT-DLP)")
+                    if "invalid base62 id" in combined:
+                        raise DownloadError("Invalid Spotify track id")
                     return result
 
-                # Check for specific error types
-                error_output = result.stderr.lower()
+                # از این‌جا به بعد exit code غیر صفر است
 
-                if "rate limit" in error_output or "retry" in error_output:
+                if (
+                    "rate limit" in combined
+                    or "rate/request limit" in combined
+                    or "too many requests" in combined
+                    or "status code: 429" in combined
+                ):
                     if attempt < max_retries - 1:
-                        logger.warning(f"Rate limit hit, retrying in {retry_delay}s")
-                        time.sleep(retry_delay)
-                        retry_delay *= 2  # Exponential backoff
-                        continue
-                    else:
-                        raise DownloadError(
-                            "Rate limit exceeded after multiple retries"
+                        logger.warning(
+                            "Rate limit hit, retrying in %ss (attempt %s/%s)",
+                            retry_delay,
+                            attempt + 1,
+                            max_retries,
                         )
+                        # backoff
+                        time.sleep(retry_delay)
+                        retry_delay *= 2
+                        continue
+                    raise DownloadError("Rate limit exceeded after multiple retries")
 
-                elif "not found" in error_output or "unavailable" in error_output:
+                if (
+                    "audioprovidererror" in combined
+                    or "yt-dlp download error" in combined
+                ):
+                    raise DownloadError("Audio provider error (YouTube / YT-DLP)")
+
+                if "invalid base62 id" in combined or "invalid id" in combined:
+                    raise DownloadError("Invalid Spotify track id")
+
+                if "not found" in combined or "unavailable" in combined:
                     raise DownloadError("Track not found or unavailable")
 
-                elif "network" in error_output or "connection" in error_output:
+                if "network" in combined or "connection" in combined:
                     raise DownloadError("Network connection error")
 
-                else:
-                    raise DownloadError(f"Download failed: {result.stderr}")
+                # fallback
+                raise DownloadError(f"Download failed: {stderr or stdout}")
 
             except subprocess.TimeoutExpired:
                 if attempt < max_retries - 1:
-                    logger.warning(f"Download timed out, retrying...")
+                    logger.warning("Download timed out, retrying...")
                     continue
-                else:
-                    raise DownloadError("Download timed out after multiple attempts")
+                raise DownloadError("Download timed out after multiple attempts")
 
             except Exception as e:
                 if attempt < max_retries - 1:
-                    logger.warning(f"Download error: {e}, retrying...")
+                    logger.warning("Download error: %s, retrying...", e)
                     time.sleep(retry_delay)
                     continue
-                else:
-                    raise DownloadError(f"Unexpected download error: {e}")
+                raise DownloadError(f"Unexpected download error: {e}")
 
         raise DownloadError("Download failed after all retry attempts")
 
@@ -300,7 +341,7 @@ class SpotifyDownloader:
         try:
             if not os.path.isdir(download_dir):
                 logger.warning(
-                    f"Download directory does not exist or is not a directory: {download_dir}"
+                    "Download directory does not exist or is not a directory: %s", download_dir
                 )
                 return []
 
@@ -315,17 +356,17 @@ class SpotifyDownloader:
                     try:
                         file_stat = os.stat(file_path)
                     except OSError as e:
-                        logger.warning(f"Skipping file {file_path}: {e}")
+                        logger.warning("Skipping file %s: %s", file_path, e)
                         continue
 
                     # صفر بایت = خراب / ناقص
                     if file_stat.st_size == 0:
-                        logger.warning(f"Skipping zero-size file {filename}")
+                        logger.warning("Skipping zero-size file %s", filename)
                         continue
 
                     # چک حداکثر سایز
                     if file_stat.st_size > self.max_file_size:
-                        logger.warning(f"File {filename} exceeds size limit")
+                        logger.warning("File %s exceeds size limit", filename)
                         continue
 
                     file_info = {
@@ -337,7 +378,7 @@ class SpotifyDownloader:
 
                     files.append(file_info)
                     logger.debug(
-                        f"Processed file: {filename} ({file_info['size_mb']:.2f}MB)"
+                        "Processed file: %s (%.2fMB)", filename, file_info['size_mb']
                     )
 
             if not files:
@@ -347,13 +388,13 @@ class SpotifyDownloader:
                     top_level = "unavailable"
 
                 logger.warning(
-                    f"No audio files found under {download_dir}. Top-level contents: {top_level}"
+                    "No audio files found under %s. Top-level contents: %s", download_dir, top_level
                 )
 
             return files
 
         except Exception as e:
-            logger.error(f"Error processing downloaded files: {e}")
+            logger.error("Error processing downloaded files: %s", e)
             raise DownloadError(f"Error processing downloaded files: {e}")
 
     def download(
@@ -436,7 +477,7 @@ class SpotifyDownloader:
             return DownloadResult(success=False, error=str(e), metadata=metadata)
 
 
-def download_and_send(bot: TeleBot, message: Message, spotify_url: str, quality: int):
+def download_and_send(bot: TeleBot, message: Message, spotify_url: str, quality: int, user_id: int = None):
     """
     Download Spotify track and send to user with enhanced error handling.
 
@@ -445,8 +486,10 @@ def download_and_send(bot: TeleBot, message: Message, spotify_url: str, quality:
         message: User message
         spotify_url: Spotify URL to download
         quality: Audio quality
+        user_id: Telegram user ID (if None, uses message.chat.id for backwards compatibility)
     """
-    user_id = message.chat.id
+    if user_id is None:
+        user_id = message.chat.id
     messages = get_messages(user_id)
 
     # Initialize downloader
@@ -482,6 +525,13 @@ def download_and_send(bot: TeleBot, message: Message, spotify_url: str, quality:
 
             if "rate limit" in error_text:
                 bot.send_message(user_id, messages.get("retry_failed"))
+            elif "audio provider error" in error_text or "yt-dlp" in error_text:
+                bot.send_message(user_id, messages.get("audio_provider_error"))
+            elif (
+                "invalid spotify track id" in error_text
+                or "invalid spotify url" in error_text
+            ):
+                bot.send_message(user_id, messages.get("invalid_url"))
             elif "not found" in error_text or "unavailable" in error_text:
                 bot.send_message(user_id, messages.get("no_files_downloaded"))
             elif "no files were downloaded" in error_text:
@@ -516,7 +566,7 @@ def download_and_send(bot: TeleBot, message: Message, spotify_url: str, quality:
                 os.remove(file_path)
 
             except Exception as e:
-                logger.error(f"Failed to send file {file_path}: {e}")
+                logger.error("Failed to send file %s: %s", file_path, e)
                 bot.send_message(user_id, messages.get("file_send_error", error=str(e)))
 
         if files_sent == 0:
@@ -531,5 +581,5 @@ def download_and_send(bot: TeleBot, message: Message, spotify_url: str, quality:
             pass  # Ignore cleanup errors
 
     except Exception as e:
-        logger.error(f"Unexpected error in download_and_send: {e}")
+        logger.error("Unexpected error in download_and_send: %s", e)
         bot.send_message(user_id, messages.get("unexpected_error"))

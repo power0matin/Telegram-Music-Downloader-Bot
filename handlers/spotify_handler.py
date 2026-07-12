@@ -8,6 +8,7 @@ validation, and improved user experience.
 from __future__ import annotations
 
 import hashlib
+import re
 import time
 from typing import Dict, Optional
 
@@ -61,7 +62,7 @@ class LinkStore:
             Unique link ID
         """
         data = f"{link}:{user_id}:{int(time.time())}"
-        return hashlib.md5(data.encode("utf-8")).hexdigest()[:12]
+        return hashlib.sha256(data.encode("utf-8")).hexdigest()[:12]
 
     def store_link(
         self, link_id: str, link: str, user_id: int, metadata: Optional[Dict] = None
@@ -253,7 +254,7 @@ def _is_spotify_message(message: Message) -> bool:
     lowered = text.strip().lower()
     return (
         "open.spotify.com" in lowered
-        or "spotify.com" in lowered
+        or re.search(r'(?:https?://)?(?:www\.)?spotify\.com/', lowered) is not None
         or lowered.startswith("spotify:")
     )
 

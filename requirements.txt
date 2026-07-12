@@ -4,6 +4,9 @@ pyTelegramBotAPI>=4.14.0,<5.0.0
 # HTTP requests for metadata extraction
 requests>=2.31.0,<3.0.0
 
+# Environment variable management
+python-dotenv>=1.0.0
+
 # Spotify downloader
 spotdl>=4.2.0,<5.0.0
 

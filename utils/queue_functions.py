@@ -6,6 +6,7 @@ This module handles queue operations with improved error handling and logging.
 
 import json
 import os
+import time
 from typing import List, Dict, Any, Optional
 
 from config import config, QUEUE_PATH
@@ -29,14 +30,14 @@ def load_queue() -> List[Dict[str, Any]]:
         with open(QUEUE_PATH, "r", encoding="utf-8") as f:
             queue = json.load(f)
 
-        logger.debug(f"Loaded queue with {len(queue)} items")
+        logger.debug("Loaded queue with %d items", len(queue))
         return queue
 
     except (json.JSONDecodeError, FileNotFoundError) as e:
-        logger.error(f"Error loading queue: {e}")
+        logger.error("Error loading queue: %s", e)
         return []
     except Exception as e:
-        logger.error(f"Unexpected error loading queue: {e}")
+        logger.error("Unexpected error loading queue: %s", e)
         return []
 
 
@@ -57,11 +58,11 @@ def save_queue(queue: List[Dict[str, Any]]) -> bool:
         with open(QUEUE_PATH, "w", encoding="utf-8") as f:
             json.dump(queue, f, indent=2, ensure_ascii=False)
 
-        logger.debug(f"Saved queue with {len(queue)} items")
+        logger.debug("Saved queue with %d items", len(queue))
         return True
 
     except Exception as e:
-        logger.error(f"Error saving queue: {e}")
+        logger.error("Error saving queue: %s", e)
         return False
 
 
@@ -82,24 +83,22 @@ def add_to_queue(link: str, user_id: int) -> bool:
         # Check for duplicates
         for item in queue:
             if item.get("link") == link and item.get("user_id") == user_id:
-                logger.debug(f"Link already in queue for user {user_id}")
+                logger.debug("Link already in queue for user %s", user_id)
                 return False
 
         # Add new item with timestamp
-        import time
-
         new_item = {"link": link, "user_id": user_id, "added_at": time.time()}
 
         queue.append(new_item)
 
         if save_queue(queue):
-            logger.info(f"Added link to queue for user {user_id}")
+            logger.info("Added link to queue for user %s", user_id)
             return True
         else:
             return False
 
     except Exception as e:
-        logger.error(f"Error adding to queue: {e}")
+        logger.error("Error adding to queue: %s", e)
         return False
 
 
@@ -124,18 +123,18 @@ def get_next_from_queue(user_id: int) -> Optional[Dict[str, Any]]:
 
                 # Save updated queue
                 if save_queue(queue):
-                    logger.info(f"Retrieved item from queue for user {user_id}")
+                    logger.info("Retrieved item from queue for user %s", user_id)
                     return removed_item
                 else:
                     # If save failed, add item back
                     queue.insert(i, removed_item)
                     return None
 
-        logger.debug(f"No queue items found for user {user_id}")
+        logger.debug("No queue items found for user %s", user_id)
         return None
 
     except Exception as e:
-        logger.error(f"Error getting from queue: {e}")
+        logger.error("Error getting from queue: %s", e)
         return None
 
 
@@ -192,14 +191,14 @@ def clear_user_queue(user_id: int) -> bool:
         if removed_count > 0:
             if save_queue(queue):
                 logger.info(
-                    f"Cleared {removed_count} items from queue for user {user_id}"
+                    "Cleared %d items from queue for user %s", removed_count, user_id
                 )
                 return True
 
         return removed_count == 0  # True if nothing to remove
 
     except Exception as e:
-        logger.error(f"Error clearing user queue: {e}")
+        logger.error("Error clearing user queue: %s", e)
         return False
 
 
@@ -214,8 +213,6 @@ def cleanup_old_queue_items(max_age_hours: int = 24) -> int:
         Number of items cleaned up
     """
     try:
-        import time
-
         queue = load_queue()
         current_time = time.time()
         max_age_seconds = max_age_hours * 3600
@@ -233,11 +230,11 @@ def cleanup_old_queue_items(max_age_hours: int = 24) -> int:
 
         if cleaned_count > 0:
             if save_queue(queue):
-                logger.info(f"Cleaned up {cleaned_count} old queue items")
+                logger.info("Cleaned up %d old queue items", cleaned_count)
                 return cleaned_count
 
         return 0
 
     except Exception as e:
-        logger.error(f"Error cleaning up queue: {e}")
+        logger.error("Error cleaning up queue: %s", e)
         return 0
