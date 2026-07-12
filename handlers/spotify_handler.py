@@ -254,7 +254,7 @@ def _is_spotify_message(message: Message) -> bool:
     lowered = text.strip().lower()
     return (
         "open.spotify.com" in lowered
-        or re.search(r'(?:https?://)?(?:www\.)?spotify\.com/', lowered) is not None
+        or re.search(r'(?<![a-z0-9-])spotify\.com(?:/|$)', lowered) is not None
         or lowered.startswith("spotify:")
     )
 

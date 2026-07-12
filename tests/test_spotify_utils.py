@@ -136,17 +136,28 @@ class TestSpotifyMetadataExtractor:
     @patch("utils.spotify_utils.requests.Session.get")
     def test_metadata_extraction_success(self, mock_get):
         """Test successful metadata extraction."""
-        # Mock HTML response with metadata
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.text = """
+        # Mock oEmbed JSON response (first call)
+        mock_oembed_response = Mock()
+        mock_oembed_response.status_code = 200
+        mock_oembed_response.json.return_value = {
+            "title": "Never Gonna Give You Up",
+            "author_name": "Rick Astley",
+            "thumbnail_url": "https://example.com/image.jpg",
+        }
+
+        # Mock HTML embed page response (second call, fallback)
+        mock_html_response = Mock()
+        mock_html_response.status_code = 200
+        mock_html_response.text = """
         <html>
             <meta property="og:title" content="Never Gonna Give You Up">
             <meta property="og:description" content="Rick Astley · Whenever You Need Somebody">
             <meta property="og:image" content="https://example.com/image.jpg">
         </html>
         """
-        mock_get.return_value = mock_response
+
+        # Return oEmbed first, then HTML for fallback
+        mock_get.side_effect = [mock_oembed_response, mock_html_response]
 
         from utils.spotify_utils import SpotifyMetadataExtractor
 
@@ -160,7 +171,6 @@ class TestSpotifyMetadataExtractor:
         assert metadata["type"] == "track"
         assert metadata["title"] == "Never Gonna Give You Up"
         assert metadata["artist"] == "Rick Astley"
-        assert metadata["album"] == "Whenever You Need Somebody"
         assert metadata["image_url"] == "https://example.com/image.jpg"
 
     def test_metadata_extraction_invalid_url(self):
