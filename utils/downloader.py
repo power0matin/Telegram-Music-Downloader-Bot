@@ -207,8 +207,31 @@ class SpotifyDownloader:
             output_template,
             "--overwrite",
             "skip",  # Skip if file already exists
-            spotify_url,
         ]
+
+        # Fall back through multiple audio sources instead of only youtube-music.
+        # If YouTube Music blocks/rate-limits us, spotdl will try youtube, then
+        # soundcloud, instead of failing the whole track outright.
+        if config.audio_providers:
+            command += ["--audio-providers", *config.audio_providers]
+
+        # Use cookies from a real logged-in browser session, if provided.
+        # Optional — see PROXY_URL below for a cookie-free alternative.
+        if config.cookie_file:
+            command += ["--cookie-file", config.cookie_file]
+
+        # Route yt-dlp through a proxy with better IP reputation than the VPS
+        # itself. This is the "no manual cookies" fix for
+        # "AudioProviderError: YT-DLP download error" on datacenter IPs — set
+        # PROXY_URL once and it just keeps working, no re-exporting cookies.
+        if config.proxy_url:
+            command += ["--proxy", config.proxy_url]
+
+        # Any extra raw yt-dlp args (extractor-args, sleep-requests, etc.)
+        if config.ytdlp_extra_args:
+            command += ["--yt-dlp-args", config.ytdlp_extra_args]
+
+        command.append(spotify_url)
 
         return command
 
@@ -314,9 +337,29 @@ class SpotifyDownloader:
                     continue
                 raise DownloadError("Download timed out after multiple attempts")
 
+            except DownloadError as e:
+                # Audio provider errors are frequently transient (YouTube
+                # throttling/blocking a specific search result or IP), so back
+                # off and retry with the same fallback-provider command before
+                # giving up. We re-raise the *original* message instead of
+                # wrapping it, so downstream error-matching in
+                # download_and_send still works correctly.
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        "Download error: %s, retrying in %ss (attempt %s/%s)",
+                        e,
+                        retry_delay,
+                        attempt + 1,
+                        max_retries,
+                    )
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                    continue
+                raise
+
             except Exception as e:
                 if attempt < max_retries - 1:
-                    logger.warning("Download error: %s, retrying...", e)
+                    logger.warning("Unexpected error: %s, retrying...", e)
                     time.sleep(retry_delay)
                     continue
                 raise DownloadError(f"Unexpected download error: {e}")

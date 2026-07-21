@@ -74,6 +74,12 @@ class Config:
     rate_limit_requests: int
     rate_limit_window_seconds: int
 
+    # yt-dlp / spotdl reliability options (help avoid YouTube bot-blocking on VPS IPs)
+    cookie_file: str
+    ytdlp_extra_args: str
+    proxy_url: str
+    audio_providers: Tuple[str, ...] = ("soundcloud", "youtube-music", "youtube")
+
     supported_languages: Tuple[str, ...] = ("en", "fa")
 
     @classmethod
@@ -95,6 +101,33 @@ class Config:
         # Rate limiter
         rate_limit_requests = _get_int("RATE_LIMIT_REQUESTS", 20)
         rate_limit_window_seconds = _get_int("RATE_LIMIT_WINDOW_SECONDS", 60)
+
+        # yt-dlp / spotdl reliability options
+        # COOKIE_FILE: path to a cookies.txt exported from a logged-in YouTube
+        # session (Netscape format). Strongly recommended on VPS/datacenter IPs,
+        # since YouTube frequently blocks anonymous requests from cloud providers.
+        cookie_file = _get_str("COOKIE_FILE", "")
+        # YTDLP_EXTRA_ARGS: raw extra args passed through to yt-dlp via spotdl's
+        # --yt-dlp-args, e.g. "--extractor-args youtube:player_client=web_music,default --sleep-requests 1"
+        ytdlp_extra_args = _get_str("YTDLP_EXTRA_ARGS", "")
+        # PROXY_URL: route yt-dlp's YouTube requests through a proxy with a
+        # cleaner IP reputation than the VPS's own (datacenter IPs get bot-
+        # blocked by YouTube much more aggressively than residential ones).
+        # This is the "no manual cookies" fix — set it and forget it.
+        # e.g. http://user:pass@residential-proxy-host:port
+        proxy_url = _get_str("PROXY_URL", "")
+
+        # AUDIO_PROVIDERS: comma-separated fallback order for spotdl's audio
+        # sources. Default is SoundCloud-first because it has no bot-detection
+        # problem at all on a plain VPS — no cookies, no proxy, nothing to
+        # maintain. YouTube is kept as a fallback for tracks SoundCloud
+        # doesn't have, so you still get it when it happens to work.
+        audio_providers_raw = _get_str(
+            "AUDIO_PROVIDERS", "soundcloud,youtube-music,youtube"
+        )
+        audio_providers: Tuple[str, ...] = tuple(
+            p.strip() for p in audio_providers_raw.split(",") if p.strip()
+        )
 
         # Logging
         log_level = _get_str("LOG_LEVEL", "DEBUG").upper()
@@ -119,6 +152,10 @@ class Config:
             default_language=default_language,
             rate_limit_requests=rate_limit_requests,
             rate_limit_window_seconds=rate_limit_window_seconds,
+            cookie_file=cookie_file,
+            ytdlp_extra_args=ytdlp_extra_args,
+            proxy_url=proxy_url,
+            audio_providers=audio_providers,
             supported_languages=supported_languages,
         )
 
