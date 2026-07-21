@@ -274,11 +274,12 @@ class SpotifyDownloader:
                 stderr = result.stderr or ""
                 combined = (stdout + "\n" + stderr).lower()
 
+                # Log full output at DEBUG level for diagnosis
                 logger.debug(
-                    "spotdl exit code=%s, stdout(first 400)=%r, stderr(first 400)=%r",
+                    "spotdl exit code=%s\n--- stdout ---\n%s\n--- stderr ---\n%s",
                     result.returncode,
-                    stdout[:400],
-                    stderr[:400],
+                    stdout[:2000],
+                    stderr[:2000],
                 )
 
                 # exit code صفر ولی با خطای provider در لاگ
@@ -316,20 +317,35 @@ class SpotifyDownloader:
                 if (
                     "audioprovidererror" in combined
                     or "yt-dlp download error" in combined
+                    or "could not extract" in combined
                 ):
-                    raise DownloadError("Audio provider error (YouTube / YT-DLP)")
+                    # Log specific audio provider failure for diagnosis
+                    if "sign in to confirm" in combined or "bot" in combined:
+                        logger.error("YouTube bot detection triggered - consider using PROXY_URL or COOKIE_FILE")
+                    raise DownloadError("Audio provider error - YouTube/SoundCloud may be blocked on this server")
 
                 if "invalid base62 id" in combined or "invalid id" in combined:
                     raise DownloadError("Invalid Spotify track id")
 
-                if "not found" in combined or "unavailable" in combined:
-                    raise DownloadError("Track not found or unavailable")
+                # Check for track-specific errors (vs audio source errors)
+                # "not found" alone is too broad - it can appear in audio provider errors
+                if "no results found" in combined or "track not found" in combined:
+                    raise DownloadError("Track not found on Spotify")
+                if "unavailable" in combined and "audio" not in combined:
+                    raise DownloadError("Track is unavailable in your region")
 
                 if "network" in combined or "connection" in combined:
                     raise DownloadError("Network connection error")
 
-                # fallback
-                raise DownloadError(f"Download failed: {stderr or stdout}")
+                # YouTube-specific bot detection errors
+                if "sign in to confirm" in combined or "please sign in" in combined:
+                    raise DownloadError("YouTube requires sign-in - set COOKIE_FILE in .env")
+                if "too many requests" in combined or "rate" in combined:
+                    raise DownloadError("Rate limited by audio source")
+
+                # fallback - log the actual error for diagnosis
+                logger.error("Unhandled spotdl error: stdout=%s, stderr=%s", stdout[:500], stderr[:500])
+                raise DownloadError(f"Download failed: {stderr[:200] or stdout[:200]}")
 
             except subprocess.TimeoutExpired:
                 if attempt < max_retries - 1:
@@ -568,16 +584,27 @@ def download_and_send(bot: TeleBot, message: Message, spotify_url: str, quality:
 
             if "rate limit" in error_text:
                 bot.send_message(user_id, messages.get("retry_failed"))
-            elif "audio provider error" in error_text or "yt-dlp" in error_text:
-                bot.send_message(user_id, messages.get("audio_provider_error"))
+            elif "audio provider" in error_text or "yt-dlp" in error_text or "blocked" in error_text:
+                # YouTube/SoundCloud blocked on VPS - guide user to fix
+                error_msg = "⚠️ Audio source blocked on this server.\n\n"
+                error_msg += "This usually happens when YouTube blocks datacenter IPs.\n\n"
+                error_msg += "Fix options:\n"
+                error_msg += "1. Set PROXY_URL in .env (residential proxy)\n"
+                error_msg += "2. Set COOKIE_FILE in .env (YouTube cookies)\n"
+                error_msg += "3. Use soundcloud-only tracks"
+                bot.send_message(user_id, error_msg)
+            elif "sign-in" in error_text or "sign in" in error_text:
+                bot.send_message(user_id, "⚠️ YouTube requires sign-in. Set COOKIE_FILE in .env with your YouTube cookies.")
             elif (
                 "invalid spotify track id" in error_text
                 or "invalid spotify url" in error_text
             ):
                 bot.send_message(user_id, messages.get("invalid_url"))
-            elif "not found" in error_text or "unavailable" in error_text:
-                bot.send_message(user_id, messages.get("no_files_downloaded"))
-            elif "no files were downloaded" in error_text:
+            elif "track not found" in error_text:
+                bot.send_message(user_id, "❌ Track not found on Spotify. Please check the URL.")
+            elif "unavailable" in error_text:
+                bot.send_message(user_id, "❌ Track is unavailable in your region.")
+            elif "not found" in error_text or "no files" in error_text:
                 bot.send_message(user_id, messages.get("no_files_downloaded"))
             elif "timed out" in error_text:
                 bot.send_message(user_id, messages.get("download_timeout"))
