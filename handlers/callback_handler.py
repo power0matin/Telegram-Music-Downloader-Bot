@@ -11,16 +11,21 @@ from threading import Semaphore
 from telebot import TeleBot
 from telebot.types import CallbackQuery
 
+from config import config
 from utils.logging_config import setup_logging, log_user_action
 from utils.i18n import get_messages
 from utils.downloader import download_and_send
 from utils.spotify_utils import validate_spotify_url
-from .spotify_handler import get_stored_link_data
+from .spotify_handler import (
+    consume_stored_link_data,
+    format_metadata_html,
+    get_stored_link_data,
+)
 
 logger = setup_logging(__name__)
 
 # Limit concurrent downloads to prevent DoS
-_download_semaphore = Semaphore(5)
+_download_semaphore = Semaphore(config.max_concurrent_downloads)
 
 
 def register_callback_handlers(bot: TeleBot):
@@ -60,7 +65,8 @@ def register_callback_handlers(bot: TeleBot):
             bot.answer_callback_query(call.id, messages.get("invalid_callback"))
             return
 
-        # Retrieve stored link data
+        # Peek first so a request is not consumed while all worker slots are
+        # occupied. The user can tap the same button again after a short wait.
         link_data = get_stored_link_data(link_id, user_id)
         if not link_data:
             logger.warning("Link not found for user %s, link_id: %s", user_id, link_id)
@@ -76,6 +82,30 @@ def register_callback_handlers(bot: TeleBot):
             bot.answer_callback_query(call.id, messages.get("invalid_spotify_link"))
             return
 
+        # Do not create unbounded threads that merely wait on a semaphore.
+        # Keeping the stored link intact on saturation makes overload bounded
+        # and lets the same callback be retried later.
+        if not _download_semaphore.acquire(blocking=False):
+            try:
+                bot.answer_callback_query(call.id, messages.get("server_busy"))
+            except Exception as e:
+                logger.warning("Failed to report busy download queue: %s", e)
+            return
+
+        # Atomically consume only after a worker slot is reserved. This still
+        # prevents double taps/replayed payloads from starting duplicates.
+        link_data = consume_stored_link_data(link_id, user_id)
+        if not link_data:
+            _download_semaphore.release()
+            try:
+                bot.answer_callback_query(call.id, messages.get("link_not_found"))
+            except Exception as e:
+                logger.warning("Failed to report consumed callback: %s", e)
+            return
+
+        spotify_url = link_data["link"]
+        metadata = link_data.get("metadata", {})
+
         # Log quality selection
         log_user_action(
             logger,
@@ -84,24 +114,27 @@ def register_callback_handlers(bot: TeleBot):
             f"Quality: {quality}kbps, URL: {spotify_url[:50]}...",
         )
 
-        # Answer callback query
-        bot.answer_callback_query(
-            call.id, messages.get("quality_selected", quality=quality)
-        )
+        # A callback acknowledgement is best-effort UI. The link has already
+        # been consumed, so a transient Telegram error here must never prevent
+        # the actual download from starting.
+        try:
+            bot.answer_callback_query(
+                call.id, messages.get("quality_selected", quality=quality)
+            )
+        except Exception as e:
+            logger.warning("Failed to acknowledge quality callback: %s", e)
 
         # Update message to show download progress
         try:
             progress_text = messages.get("downloading", quality=quality)
 
-            # Add metadata to progress message if available
-            if metadata.get("valid") and metadata.get("title"):
-                title = metadata.get("title", "Unknown")
-                artist = metadata.get("artist", "Unknown")
-                progress_text = f"🎵 **{title}**"
-                if artist:
-                    progress_text += f"\n👤 {artist}"
-                progress_text += (
-                    f"\n\n⏳ {messages.get('downloading', quality=quality)}"
+            # Spotify metadata is untrusted text. Render it as escaped HTML so
+            # titles containing Markdown metacharacters cannot break the reply.
+            metadata_text = format_metadata_html(metadata)
+            if metadata_text:
+                progress_text = (
+                    f"{metadata_text}\n\n"
+                    f"⏳ {messages.get('downloading', quality=quality)}"
                 )
 
             bot.edit_message_text(
@@ -109,32 +142,57 @@ def register_callback_handlers(bot: TeleBot):
                 message_id=message_id,
                 text=progress_text,
                 reply_markup=None,  # Remove the inline keyboard
-                parse_mode="Markdown",
+                parse_mode="HTML",
             )
         except Exception as e:
-            logger.error("Failed to update progress message: %s", e)
-            # Continue with download even if message update fails
-            bot.send_message(chat_id, messages.get("downloading", quality=quality))
+            logger.warning("Failed to update progress message: %s", e)
+            # Continue with the download even if all status-message updates
+            # fail. A cosmetic Telegram request must not block delivery.
+            try:
+                status_kwargs = {}
+                thread_id = getattr(call.message, "message_thread_id", None)
+                if thread_id is not None:
+                    status_kwargs["message_thread_id"] = thread_id
+                bot.send_message(
+                    chat_id,
+                    messages.get("downloading", quality=quality),
+                    **status_kwargs,
+                )
+            except Exception as status_error:
+                logger.warning("Failed to send fallback progress message: %s", status_error)
 
         def _download_worker():
-            with _download_semaphore:
+            try:
+                download_and_send(
+                    bot,
+                    call.message,
+                    spotify_url,
+                    quality,
+                    user_id=user_id,
+                )
+            except Exception as e:
+                logger.error("Download failed for user %s: %s", user_id, e)
+
+                # download_and_send already contains its own error boundary; this
+                # is only a final guard for truly unexpected worker failures.
                 try:
-                    download_and_send(bot, call.message, spotify_url, quality, user_id=user_id)
-                except Exception as e:
-                    logger.error("Download failed for user %s: %s", user_id, e)
+                    bot.send_message(chat_id, messages.get("unexpected_error"))
+                except Exception:
+                    logger.exception("Failed to report worker error to chat %s", chat_id)
+            finally:
+                _download_semaphore.release()
 
-                    # Send error message
-                    error_message = messages.get("unexpected_error")
-                    if "rate limit" in str(e).lower():
-                        error_message = messages.get("retry_failed")
-                    elif "not found" in str(e).lower():
-                        error_message = messages.get("no_files_downloaded")
-                    elif "timeout" in str(e).lower():
-                        error_message = messages.get("download_timeout")
-
-                    bot.send_message(chat_id, error_message)
-
-        threading.Thread(target=_download_worker, daemon=True).start()
+        try:
+            threading.Thread(target=_download_worker, daemon=True).start()
+        except Exception:
+            _download_semaphore.release()
+            logger.exception("Failed to start download worker for user %s", user_id)
+            try:
+                bot.send_message(chat_id, messages.get("unexpected_error"))
+            except Exception:
+                logger.exception(
+                    "Failed to report worker start failure to chat %s", chat_id
+                )
 
     @bot.callback_query_handler(func=lambda call: True)
     def handle_unknown_callback(call: CallbackQuery):

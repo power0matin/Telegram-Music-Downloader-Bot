@@ -8,8 +8,11 @@ validation, and improved user experience.
 from __future__ import annotations
 
 import hashlib
+import html
+import math
 import re
 import time
+from threading import RLock
 from typing import Dict, Optional
 
 from telebot import TeleBot
@@ -49,6 +52,7 @@ class LinkStore:
         """
         self.store: Dict[str, Dict] = {}
         self.expiry_seconds = expiry_seconds
+        self._lock = RLock()
 
     def generate_link_id(self, link: str, user_id: int) -> str:
         """
@@ -61,7 +65,7 @@ class LinkStore:
         Returns:
             Unique link ID
         """
-        data = f"{link}:{user_id}:{int(time.time())}"
+        data = f"{link}:{user_id}:{time.time_ns()}"
         return hashlib.sha256(data.encode("utf-8")).hexdigest()[:12]
 
     def store_link(
@@ -76,14 +80,14 @@ class LinkStore:
             user_id: User ID
             metadata: Optional metadata snapshot
         """
-        self.store[link_id] = {
-            "link": link,
-            "user_id": user_id,
-            "metadata": metadata or {},
-            "created_at": time.time(),
-        }
-
-        self._cleanup_expired()
+        with self._lock:
+            self.store[link_id] = {
+                "link": link,
+                "user_id": user_id,
+                "metadata": metadata or {},
+                "created_at": time.time(),
+            }
+            self._cleanup_expired_locked()
 
     def retrieve_link(
         self, link_id: str, user_id: Optional[int] = None
@@ -98,19 +102,36 @@ class LinkStore:
         Returns:
             Link information or None if not found/expired
         """
-        self._cleanup_expired()
+        with self._lock:
+            self._cleanup_expired_locked()
 
-        link_data = self.store.get(link_id)
-        if not link_data:
-            return None
+            link_data = self.store.get(link_id)
+            if not link_data:
+                return None
 
-        if user_id is not None and link_data["user_id"] != user_id:
-            return None
+            if user_id is not None and link_data["user_id"] != user_id:
+                return None
 
-        return link_data
+            return dict(link_data)
+
+    def consume_link(self, link_id: str, user_id: int) -> Optional[Dict]:
+        """Atomically retrieve and remove a link so one callback starts one download."""
+        with self._lock:
+            self._cleanup_expired_locked()
+            link_data = self.store.get(link_id)
+            if not link_data or link_data["user_id"] != user_id:
+                return None
+
+            self.store.pop(link_id, None)
+            return dict(link_data)
 
     def _cleanup_expired(self) -> None:
         """Remove expired links."""
+        with self._lock:
+            self._cleanup_expired_locked()
+
+    def _cleanup_expired_locked(self) -> None:
+        """Remove expired links while the store lock is held."""
         current_time = time.time()
         expired_keys = [
             key
@@ -154,7 +175,11 @@ def register_spotify_handler(bot: TeleBot) -> None:
                 "Rate limited",
                 f"Wait: {time_until_allowed:.1f}s",
             )
-            bot.reply_to(message, messages.get("rate_limit_exceeded"))
+            wait_seconds = max(1, math.ceil(time_until_allowed or 1))
+            bot.reply_to(
+                message,
+                messages.get("rate_limit_exceeded", seconds=wait_seconds),
+            )
             return
 
         raw_text = (message.text or "").strip()
@@ -205,18 +230,15 @@ def register_spotify_handler(bot: TeleBot) -> None:
 
         # Prepare response text with metadata
         response_text = messages.get("link_detected")
-        if metadata.get("valid") and metadata.get("title"):
-            title = metadata.get("title", "Unknown")
-            artist = metadata.get("artist", "Unknown")
-            response_text += f"\n\n🎵 **{title}**"
-            if artist:
-                response_text += f"\n👤 {artist}"
+        metadata_text = format_metadata_html(metadata)
+        if metadata_text:
+            response_text += f"\n\n{metadata_text}"
 
         bot.reply_to(
             message,
             response_text,
             reply_markup=markup,
-            parse_mode="Markdown",
+            parse_mode="HTML",
         )
 
     @bot.message_handler(
@@ -271,3 +293,21 @@ def get_stored_link_data(link_id: str, user_id: int) -> Optional[Dict]:
         Link data or None
     """
     return link_store.retrieve_link(link_id, user_id)
+
+
+def consume_stored_link_data(link_id: str, user_id: int) -> Optional[Dict]:
+    """Atomically consume stored callback data for a single download attempt."""
+    return link_store.consume_link(link_id, user_id)
+
+
+def format_metadata_html(metadata: Dict) -> str:
+    """Build Telegram-safe HTML metadata text from untrusted track metadata."""
+    if not metadata.get("valid") or not metadata.get("title"):
+        return ""
+
+    title = html.escape(str(metadata.get("title") or "Unknown"))
+    artist = metadata.get("artist")
+    text = f"🎵 <b>{title}</b>"
+    if artist:
+        text += f"\n👤 {html.escape(str(artist))}"
+    return text

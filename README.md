@@ -9,11 +9,11 @@
 <div align="center">
 
 ![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge\&logo=telegram)
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge\&logo=python)
+![Python](https://img.shields.io/badge/Python-3.10--3.14-blue?style=for-the-badge\&logo=python)
 ![Spotify](https://img.shields.io/badge/Spotify-Downloader-green?style=for-the-badge\&logo=spotify)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
-**A production-ready, scalable Telegram bot for downloading music from Spotify with advanced features.**
+**A Telegram bot that matches Spotify metadata to downloadable audio and sends the result back to the requesting chat.**
 
 [🚀 Quick Start](#-quick-start) • [🛠️ Setup](#️-installation--setup) • [📖 Documentation](#-documentation)
 
@@ -24,19 +24,22 @@
 
 ### 🎵 Core
 
-* **Multi-format downloads**: Tracks, albums, playlists
-* **Quality selection**: 128 kbps / 320 kbps
+* **Spotify content types**: Tracks, albums, playlists
+* **MP3 bitrate selection**: 128 kbps / 320 kbps
 * **Metadata extraction**: Artist, title, album
-* **Progress updates**: Real-time status messages
+* **Status updates**: Download state and delivery feedback
 * **Smart validation**: Strict Spotify URL checks
+
+> **Audio quality note:** 320 kbps selects the MP3 output bitrate. It cannot
+> create source quality that the selected audio provider does not supply.
 
 ### 🛡️ Production
 
-* **Rate limiting**: Flood protection (default: 5 requests / 60s)
+* **Rate limiting**: Flood protection (default: 20 requests / 60s)
 * **Error handling**: Robust recovery with helpful messages
 * **Logging**: Structured logging with rotation
 * **Config management**: Environment-driven settings
-* **Dependencies**: Automatic FFmpeg installation
+* **Dependencies**: Verified FFmpeg + spotDL 4.5.x compatibility
 
 ### 🌐 UX
 
@@ -52,17 +55,15 @@
 * **Well-documented code**
 * **Extensible** for new features
 
-> **Important:** Before running the bot, verify Spotify API connectivity with **[Spotify-API-Test](https://github.com/power0matin/Spotify-API-Test)**.
-
-
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-* **Python 3.8+**
+* **Python 3.10–3.14** (required by spotDL 4.5.x)
 * **Telegram Bot Token** (from [@BotFather](https://t.me/BotFather))
 * **Git**
-* **Ubuntu/Debian** (for automatic FFmpeg installation)
+* **FFmpeg**
+* **Ubuntu 22.04/24.04** for the automated VPS installer
 
 ### 1) Clone & Setup
 
@@ -82,7 +83,7 @@ pip install -r requirements.txt
 export BOT_TOKEN="your_bot_token_here"
 
 # Optional tweaks
-export RATE_LIMIT_REQUESTS="5"
+export RATE_LIMIT_REQUESTS="20"
 export RATE_LIMIT_WINDOW_SECONDS="60"
 export DEFAULT_QUALITY="320"
 export MAX_DOWNLOAD_SIZE_MB="50"
@@ -104,25 +105,34 @@ python bot.py
 | --------------------------- | -------------------------------------- | ----------- |
 | `BOT_TOKEN`                 | **Required** — Telegram bot token      | —           |
 | `DOWNLOAD_DIR`              | Storage directory for downloads        | `downloads` |
-| `QUEUE_DIR`                 | Directory for queue files              | `queue`     |
+| `QUEUE_PATH`                | Queue tracking file                     | `queue/queue.json` |
 | `MAX_DOWNLOAD_SIZE_MB`      | Max file size (MB)                     | `50`        |
-| `RATE_LIMIT_REQUESTS`       | Max requests per window                | `5`         |
+| `RATE_LIMIT_REQUESTS`       | Max requests per window                | `20`        |
 | `RATE_LIMIT_WINDOW_SECONDS` | Window length (seconds)                | `60`        |
 | `DEFAULT_QUALITY`           | Default audio quality (`128` or `320`) | `320`       |
 | `LOG_LEVEL`                 | Logging level                          | `INFO`      |
-| `SUPPORTED_LANGUAGES`       | Comma-separated locale list            | `en,fa`     |
 | `DEFAULT_LANGUAGE`          | Default locale                         | `en`        |
+| `DOWNLOAD_TIMEOUT_SECONDS`  | Per-attempt spotDL timeout              | `900`       |
+| `UPLOAD_TIMEOUT_SECONDS`    | Telegram audio upload timeout           | `180`       |
+| `UPLOAD_RETRIES`            | Transient Telegram upload attempts      | `3`         |
+| `MAX_CONCURRENT_DOWNLOADS`  | Global concurrent download limit        | `3`         |
+| `AUDIO_PROVIDERS`           | spotDL provider fallback order          | `soundcloud,youtube-music,youtube` |
+| `COOKIE_FILE`               | Optional Netscape cookies file for yt-dlp | —         |
+| `PROXY_URL`                 | Optional HTTP(S) proxy for audio providers | —        |
+| `YTDLP_EXTRA_ARGS`          | Optional raw yt-dlp arguments passed by spotDL | —    |
 
 
 ## 🚀 Production Deployment
 
 ### Systemd (Recommended)
 
+On Ubuntu 22.04/24.04, the installer creates the dedicated service user,
+runtime directories, Deno fallback runtime, environment file, and hardened
+systemd unit:
+
 ```bash
-sudo cp systemd/spotify-bot.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable spotify-bot
-sudo systemctl start spotify-bot
+chmod +x setup_vps.sh
+sudo ./setup_vps.sh
 ```
 
 Check status/logs:
@@ -130,21 +140,6 @@ Check status/logs:
 ```bash
 sudo systemctl status spotify-bot
 sudo journalctl -u spotify-bot -f
-```
-
-### Docker
-
-```bash
-# Build
-docker build -t spotify-bot .
-
-# Run
-docker run -d \
-  --name spotify-bot \
-  -e BOT_TOKEN="your_token_here" \
-  -v "$(pwd)"/downloads:/app/downloads \
-  -v "$(pwd)"/logs:/app/logs \
-  spotify-bot
 ```
 
 
@@ -156,6 +151,7 @@ docker run -d \
 ├── bot.py                     # Entry point
 ├── config.py                  # Configuration manager
 ├── requirements.txt
+├── requirements-dev.txt
 ├── handlers/
 │   ├── command_handler.py     # /start, /help
 │   ├── spotify_handler.py     # URL processing
@@ -169,6 +165,7 @@ docker run -d \
 │   └── queue_functions.py     # Queue ops
 ├── systemd/
 ├── scripts/
+├── tests/
 └── docs/
 ```
 
@@ -213,15 +210,8 @@ https://open.spotify.com/de/track/4iV5W9uYEdYUVa79Axb7Rh
 
 ### Custom Messages
 
-```python
-# utils/i18n.py
-TRANSLATIONS = {
-  "en": {
-    "welcome": "Your custom welcome message",
-    "help": "Your custom help text",
-  }
-}
-```
+Edit the `Messages.TRANSLATIONS` mapping in `utils/i18n.py`; keep the same
+message keys in both `en` and `fa` so every handler has a valid fallback.
 
 ### Rate Limiting
 
@@ -237,8 +227,7 @@ rate_limiter = RateLimiter(
 ### Logging
 
 ```bash
-export LOG_LEVEL="DEBUG"      # DEBUG, INFO, WARNING, ERROR
-export LOG_FILE="custom.log"
+export LOG_LEVEL="DEBUG"      # DEBUG, INFO, WARNING, ERROR, CRITICAL
 ```
 
 
@@ -261,11 +250,6 @@ chown -R $USER:$USER downloads/ logs/
 
 * Increase `RATE_LIMIT_REQUESTS`
 * Or reduce `RATE_LIMIT_WINDOW_SECONDS`
-
-**High memory usage**
-
-* Lower `MAX_DOWNLOAD_SIZE_MB`
-* Enable log rotation
 
 **Debug mode**
 
@@ -294,11 +278,10 @@ grep "Download" logs/spotify_bot.log
 **Dev setup**
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 export LOG_LEVEL="DEBUG"
 python bot.py
-# Tests (when available)
-pytest tests/
+pytest -q
 ```
 
 
@@ -330,5 +313,3 @@ This bot is for educational use only. You are responsible for complying with Spo
 ⭐ If this project helps you, **please star the repo**!
 
 </div>
-
-

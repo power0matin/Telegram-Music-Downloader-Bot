@@ -15,6 +15,7 @@ from telebot import TeleBot
 # Import configuration and logging
 from config import config, BOT_TOKEN
 from utils.logging_config import setup_logging
+from utils.queue_functions import cleanup_old_queue_items
 from utils.rate_limiter import cleanup_expired_rate_limits
 
 # Import all handlers
@@ -63,6 +64,7 @@ class SpotifyBot:
                 try:
                     # Clean up expired rate limits every 5 minutes
                     cleanup_expired_rate_limits()
+                    cleanup_old_queue_items()
                     logger.debug("Performed periodic cleanup")
                 except Exception as e:
                     logger.error("Error in cleanup worker: %s", e)
@@ -123,7 +125,8 @@ class SpotifyBot:
             # Start polling
             logger.info("Bot is running... Press Ctrl+C to stop.")
             self.bot.infinity_polling(
-                timeout=20, long_polling_timeout=20, none_stop=True, interval=1
+                timeout=20,
+                long_polling_timeout=20,
             )
 
         except Exception as e:

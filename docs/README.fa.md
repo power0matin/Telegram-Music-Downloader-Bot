@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge&logo=telegram)
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)
+![Python](https://img.shields.io/badge/Python-3.10--3.14-blue?style=for-the-badge&logo=python)
 ![Spotify](https://img.shields.io/badge/Spotify-Downloader-green?style=for-the-badge&logo=spotify)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
@@ -16,11 +16,11 @@
 ## ✨ ویژگی‌ها
 
 - 🎵 **دانلود چندفرمته**: دانلود تک‌آهنگ، آلبوم کامل و پلی‌لیست
-- 🔊 **انتخاب کیفیت**: انتخاب بین کیفیت 128 kbps و 320 kbps
-- 🤖 **رابط کاربری تعاملی**: دکمه‌های کاربرپسند و به‌روزرسانی پیشرفت در زمان واقعی
+- 🔊 **انتخاب بیت‌ریت خروجی MP3**: انتخاب بین 128 kbps و 320 kbps
+- 🤖 **رابط کاربری تعاملی**: دکمه‌های انتخاب بیت‌ریت و پیام وضعیت دانلود
 - 🛡️ **مدیریت خطای قوی**: اعتبارسنجی جامع و پیام‌های خطای مفید
 - 🗂️ **مدیریت هوشمند فایل**: پاکسازی خودکار و دانلودهای سازمان‌یافته
-- ⚡ **عملکرد بالا**: منطق تکرار، محدودیت نرخ و دانلودهای بهینه‌شده
+- ⚡ **پایداری**: تلاش مجدد محدود، محدودیت نرخ و جداسازی فایل هر درخواست
 - 🔧 **استقرار آسان**: راه‌اندازی تک‌اسکریپت با مدیریت خودکار وابستگی‌ها
 - 🌐 **پشتیبانی چندزبانه**: مستندات انگلیسی و فارسی
 
@@ -32,9 +32,10 @@
 
 قبل از شروع، اطمینان حاصل کنید که دارید:
 
-- **Python 3.8+** روی سیستم خود نصب شده
+- **Python 3.10 تا 3.14** روی سیستم خود نصب شده
 - **توکن ربات تلگرام** (از [@BotFather](https://t.me/BotFather) دریافت کنید)
 - **Git** برای کلون کردن مخزن
+- **FFmpeg** برای پردازش فایل صوتی
 - اتصال اینترنت برای دانلود وابستگی‌ها
 
 ### 1. کلون کردن مخزن
@@ -122,12 +123,6 @@ pip install --break-system-packages -r requirements.txt
 3. اگر می‌خواهید بدون دردسر پکیج‌ها را مدیریت کنید، توصیه می‌شود از virtual environment استفاده کنید یا از ابزارهایی مثل `pipx` برای نصب برنامه‌های پایتون به صورت ایزوله بهره ببرید.
 </details>
 
-### 3. نصب وابستگی‌ها
-
-```bash
-pip install -r requirements.txt
-```
-
 ### 4. پیکربندی توکن ربات
 
 یکی از این روش‌ها را انتخاب کنید:
@@ -141,14 +136,8 @@ export BOT_TOKEN="توکن_ربات_شما"
 **روش 2: ایجاد فایل .env**
 
 ```bash
-echo "BOT_TOKEN=توکن_ربات_شما" > .env
-```
-
-**روش 3: ایجاد فایل config.py**
-
-```bash
-cp config.example.py config.py
-# سپس config.py را ویرایش کنید و توکن خود را اضافه کنید
+cp .env.example .env
+# سپس BOT_TOKEN را در .env جایگزین کنید
 ```
 
 ### 5. راه‌اندازی ربات
@@ -179,7 +168,7 @@ python3 bot.py
 
 ### وابستگی‌های سیستم
 
-ربات به صورت خودکار FFmpeg را در صورت نبودن نصب می‌کند. برای نصب دستی:
+در نصب دستی، FFmpeg باید قبل از اجرای ربات نصب شده باشد:
 
 **Ubuntu/Debian:**
 
@@ -198,17 +187,11 @@ brew install ffmpeg
 
 ### گزینه‌های پیکربندی
 
-برای پیکربندی پیشرفته فایل `config.py` ایجاد کنید:
+پیکربندی را در فایل `.env` انجام دهید و فایل `config.py` را بازنویسی نکنید:
 
-```python
-# ضروری
-BOT_TOKEN = 'توکن_ربات_شما'
-
-# تنظیمات اختیاری
-MAX_DOWNLOAD_SIZE = 50  # مگابایت
-DOWNLOAD_TIMEOUT = 300  # ثانیه
-CLEANUP_INTERVAL = 3600  # ثانیه
-SUPPORTED_FORMATS = ['mp3', 'flac', 'ogg']
+```dotenv
+BOT_TOKEN=توکن_ربات_شما
+DEFAULT_LANGUAGE=fa
 ```
 
 ## 📱 نحوه استفاده
@@ -245,32 +228,35 @@ SUPPORTED_FORMATS = ['mp3', 'flac', 'ogg']
 ```
 Telegram-Music-Downloader-Bot/
 ├── 🤖 bot.py                      # Main bot entry point
-├── ⚙️ config.example.py          # Example config (env-based settings)
+├── ⚙️ config.py                  # Environment-backed configuration
 ├── 📋 requirements.txt            # Python dependencies
+├── 📋 requirements-dev.txt        # Test dependencies
 ├── 🚀 start_bot.sh               # Startup script
 ├── 📁 handlers/                  # Bot message handlers
 │   ├── __init__.py
+│   ├── command_handler.py         # /start and /help
 │   ├── spotify_handler.py         # Spotify URL processing
 │   └── callback_handler.py        # Button interactions
 ├── 🛠️ utils/                     # Utility modules
 │   ├── __init__.py
 │   ├── downloader.py              # Download logic
+│   ├── spotify_utils.py           # URL validation and metadata
 │   ├── queue_functions.py         # Queue management
-│   └── variables.py               # Global/shared variables
+│   ├── rate_limiter.py            # Abuse protection
+│   └── i18n.py                    # English/Persian messages
 ├── 📂 scripts/                   # Maintenance shell scripts
 │   ├── cleanup_processes.sh       # Kills stray download processes
 │   └── restart_bot.sh             # Restarts the bot
 ├── 📂 systemd/                   # Systemd service definitions
-│   └── telegram_bot.service       # Service unit file
+│   └── spotify-bot.service        # Service unit file
 ├── 📂 .github/workflows/         # GitHub Actions workflows
-│   └── (your CI/CD YAML files here)
+│   └── ci.yml                     # Compile/test/script validation
 ├── 📂 queue/                     # Queue storage (auto-created)
 ├── ⬇️ downloads/                 # Temporary downloads (auto-created)
 ├── 📚 Documentation files        # Project documentation
 │   ├── README.md                  # English documentation
 │   ├── README.fa.md               # Persian documentation
-│   ├── SETUP_INSTRUCTIONS.md      # Installation & setup guide
-│   └── FIXES_APPLIED.md           # Summary of fixes
+│   └── SETUP_INSTRUCTIONS.md      # Installation & setup guide
 ├── 🧾 .gitignore                 # Git ignored files
 ├── 🪪 LICENSE                    # Project license
 ```
@@ -320,7 +306,7 @@ chmod +x start_bot.sh
 اجرا با لاگ دقیق:
 
 ```bash
-python3 bot.py --debug
+LOG_LEVEL=DEBUG python3 bot.py
 ```
 
 ### دریافت کمک
@@ -331,7 +317,7 @@ python3 bot.py --debug
 
 ## 🔒 امنیت و حریم خصوصی
 
-- ✅ **بدون جمع‌آوری داده**: ربات داده‌های کاربران یا تاریخچه دانلود را ذخیره نمی‌کند
+- ✅ **داده حداقلی**: فایل‌های صوتی پس از ارسال حذف می‌شوند؛ لینک/شناسه چتِ صف حداکثر ۲۴ ساعت برای نگهداری عملیاتی باقی می‌ماند
 - ✅ **مدیریت امن توکن**: توکن‌های ربات به صورت امن از طریق متغیرهای محیطی ذخیره می‌شوند
 - ✅ **پاکسازی خودکار**: فایل‌های موقت پس از ارسال خودکار حذف می‌شوند
 - ✅ **محدودیت نرخ**: حفاظت داخلی در برابر هرزنامه و سوءاستفاده
@@ -346,32 +332,16 @@ python3 bot.py --debug
 
 ### استقرار تولید
 
-**استفاده از systemd (Linux):**
+**استفاده از نصب‌کنندهٔ پیشنهادی روی Ubuntu 22.04/24.04:**
 
 ```bash
-# کپی فایل سرویس
-sudo cp systemd/spotify-bot.service /etc/systemd/system/
-sudo systemctl enable spotify-bot
-sudo systemctl start spotify-bot
+chmod +x setup_vps.sh
+sudo ./setup_vps.sh
 ```
 
-**استفاده از Docker:**
-
-```dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["python3", "bot.py"]
-```
-
-**استفاده از PM2:**
-
-```bash
-npm install -g pm2
-pm2 start bot.py --interpreter python3 --name spotify-bot
-```
+این مخزن در حال حاضر Dockerfile رسمی ندارد. برای اینکه FFmpeg، runtime موردنیاز
+spotDL و محدودیت‌های سرویس به‌درستی تنظیم شوند، در محیط production از
+`setup_vps.sh`/systemd استفاده کنید.
 
 ## 🤝 مشارکت
 
@@ -393,10 +363,7 @@ cd Telegram-Music-Downloader-Bot
 # ایجاد محیط توسعه
 python3 -m venv dev-env
 source dev-env/bin/activate
-pip install -r requirements.txt
-
-# نصب وابستگی‌های توسعه
-pip install black pylint pytest
+pip install -r requirements-dev.txt
 
 # اجرای تست‌ها
 python3 -m pytest tests/
@@ -404,23 +371,21 @@ python3 -m pytest tests/
 
 ## 📊 عملکرد
 
-- ⚡ **دانلودهای سریع**: بهینه‌سازی شده برای سرعت با پردازش موازی
-- 💾 **بهره‌وری حافظه**: مدیریت هوشمند حافظه برای فایل‌های بزرگ
-- 🔄 **منطق تکرار**: تکرار خودکار در شکست‌های موقت
-- 📈 **مقیاس‌پذیر**: طراحی شده برای مدیریت چندین کاربر همزمان
+- 🔄 **بازیابی خطا**: تکرار محدود برای خطاهای موقت دانلود و ارسال تلگرام
+- 🧵 **همزمانی کنترل‌شده**: تعداد دانلودهای همزمان با `MAX_CONCURRENT_DOWNLOADS` محدود می‌شود
+- 🧹 **پاکسازی فایل**: workspace هر درخواست پس از ارسال حذف می‌شود
 
 ## 📋 نیازمندی‌ها
 
-- **Python**: 3.8 یا بالاتر
-- **FFmpeg**: برای پردازش صوتی (خودکار نصب می‌شود)
-- **SpotDL**: 4.2.1+ (در requirements شامل است)
+- **Python**: 3.10 تا 3.14
+- **FFmpeg**: برای پردازش صوتی
+- **SpotDL**: نسخه 4.5.x سازگار با CLI ربات (در requirements شامل است)
 - **فضای ذخیره‌سازی**: حداقل 100 مگابایت فضای آزاد برای فایل‌های موقت
 
 ## 📞 پشتیبانی
 
 - 🆘 **مسائل**: [GitHub Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues)
 - 💬 **بحث‌ها**: [GitHub Discussions](https://github.com/power0matin/Telegram-Music-Downloader-Bot/discussions)
-- 📧 **ایمیل**: [تماس با نگهدارنده](mailto:power0matin@example.com)
 
 ## 📄 مجوز
 

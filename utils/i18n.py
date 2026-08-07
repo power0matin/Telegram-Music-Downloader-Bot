@@ -38,10 +38,10 @@ class Messages:
                 "• Playlists\n\n"
                 "**Quality options:**\n"
                 "• 128 kbps - Good quality, smaller file size\n"
-                "• 320 kbps - High quality, larger file size\n\n"
+                "• 320 kbps - Larger MP3 output; source quality depends on provider\n\n"
                 "**Rate limits:**\n"
                 f"• {config.rate_limit_requests} downloads per {config.rate_limit_window_seconds} seconds\n\n"
-                "**Note:** This bot downloads music from YouTube based on Spotify metadata."
+                "**Note:** Audio is matched through the configured providers using Spotify metadata."
             ),
             # Error messages
             "text_only": "Please send a text message containing a Spotify link.",
@@ -52,10 +52,14 @@ class Messages:
             ),
             "invalid_callback": "❌ Invalid callback data.",
             "link_not_found": "❌ Link not found or expired.",
+            "server_busy": (
+                "⏳ All download slots are busy. Please tap the quality button again "
+                "in a moment."
+            ),
             "invalid_spotify_link": "❌ Invalid Spotify link.",
             "rate_limit_exceeded": (
                 "⏳ You're sending requests too quickly. "
-                f"Please wait {config.rate_limit_window_seconds} seconds between downloads."
+                "Please try again in {seconds} seconds."
             ),
             "download_timeout": "❌ Download timed out. Please try again later.",
             "unexpected_error": "❌ An unexpected error occurred during download.",
@@ -63,14 +67,36 @@ class Messages:
                 "❌ No audio file was downloaded. "
                 "Please check the Spotify link and try again."
             ),
-            "file_send_error": "❌ Failed to send file: {error}",
+            "file_send_error": (
+                "❌ The audio was downloaded, but Telegram could not receive the file. "
+                "Please try again."
+            ),
+            "file_too_large": (
+                "❌ The downloaded audio is larger than the {limit} MB Telegram upload "
+                "limit configured for this bot."
+            ),
             "directory_error": "❌ Error accessing download directory.",
             "spotdl_not_installed": (
                 "❌ spotdl is not installed. " "Please contact the administrator."
             ),
-            "ffmpeg_installing": "🔧 FFmpeg not found. Installing FFmpeg...",
-            "ffmpeg_installed": "✅ FFmpeg installed successfully.",
-            "ffmpeg_install_failed": "❌ Failed to install FFmpeg: {error}",
+            "ffmpeg_not_installed": (
+                "❌ FFmpeg is not installed on the server. "
+                "Please contact the administrator."
+            ),
+            "spotdl_incompatible": (
+                "❌ The server has an incompatible spotDL version. "
+                "Please contact the administrator."
+            ),
+            "audio_source_unavailable": (
+                "⚠️ None of the configured audio sources could provide this item. "
+                "Please try again later or contact the administrator."
+            ),
+            "youtube_signin_required": (
+                "⚠️ YouTube rejected the server request. "
+                "The administrator may need to configure YouTube cookies or a proxy."
+            ),
+            "track_not_found": "❌ Track not found. Please check the Spotify link.",
+            "track_unavailable": "❌ This track is currently unavailable.",
             # Success messages
             "link_detected": (
                 "✅ Valid Spotify link detected!\n"
@@ -81,6 +107,10 @@ class Messages:
             ),
             "downloading": "🎵 Downloading at {quality} kbps...\nPlease wait.",
             "download_complete": "🎵 Downloaded: {filename}",
+            "partial_download": (
+                "⚠️ Partial result: {sent} file(s) sent, {failed} upload(s) failed. "
+                "Some source tracks may also have been unavailable."
+            ),
             "retry_attempt": (
                 "⏳ Rate limit hit. Retrying in {} seconds... " "(Attempt {}/{})"
             ),
@@ -89,7 +119,7 @@ class Messages:
             ),
             # Button labels
             "quality_128": "🎵 128 kbps",
-            "quality_320": "🎶 320 kbps (HQ)",
+            "quality_320": "🎶 320 kbps",
         },
         "fa": {
             # Welcome and help messages
@@ -117,10 +147,10 @@ class Messages:
                 "• پلی‌لیست‌ها\n\n"
                 "**گزینه‌های کیفیت:**\n"
                 "• ۱۲۸ کیلوبیت - کیفیت خوب، حجم کمتر\n"
-                "• ۳۲۰ کیلوبیت - کیفیت بالا، حجم بیشتر\n\n"
+                "• ۳۲۰ کیلوبیت - خروجی MP3 حجیم‌تر؛ کیفیت منبع به سرویس صوتی بستگی دارد\n\n"
                 "**محدودیت‌های نرخ:**\n"
                 f"• {config.rate_limit_requests} دانلود در هر {config.rate_limit_window_seconds} ثانیه\n\n"
-                "**توجه:** این ربات موسیقی را از یوتیوب بر اساس اطلاعات Spotify دانلود می‌کند."
+                "**توجه:** صدا بر اساس اطلاعات Spotify از منابع صوتی تنظیم‌شده دریافت می‌شود."
             ),
             # Error messages
             "text_only": "لطفاً یک پیام متنی حاوی لینک Spotify ارسال کنید.",
@@ -131,10 +161,14 @@ class Messages:
             ),
             "invalid_callback": "❌ داده callback نامعتبر است.",
             "link_not_found": "❌ لینک یافت نشد یا منقضی شده است.",
+            "server_busy": (
+                "⏳ ظرفیت دانلود ربات فعلاً پر است. کمی بعد دوباره همان دکمه کیفیت "
+                "را بزنید."
+            ),
             "invalid_spotify_link": "❌ لینک معتبر Spotify نیست.",
             "rate_limit_exceeded": (
                 "⏳ شما خیلی سریع درخواست ارسال می‌کنید. "
-                f"لطفاً {config.rate_limit_window_seconds} ثانیه بین دانلودها صبر کنید."
+                "لطفاً {seconds} ثانیه دیگر دوباره تلاش کنید."
             ),
             "download_timeout": "❌ دانلود متوقف شد. لطفاً بعداً تلاش کنید.",
             "unexpected_error": "❌ خطای غیرمنتظره در حین دانلود رخ داد.",
@@ -142,14 +176,35 @@ class Messages:
                 "❌ هیچ فایل صوتی دانلود نشد. "
                 "لطفاً لینک Spotify را بررسی کرده و دوباره تلاش کنید."
             ),
-            "file_send_error": "❌ ارسال فایل ناموفق بود: {error}",
+            "file_send_error": (
+                "❌ فایل دانلود شد، اما ارسال آن به تلگرام ناموفق بود. "
+                "لطفاً دوباره تلاش کنید."
+            ),
+            "file_too_large": (
+                "❌ فایل صوتی دانلودشده از محدودیت {limit} مگابایتی ارسال تلگرام "
+                "برای این ربات بزرگ‌تر است."
+            ),
             "directory_error": "❌ خطا در دسترسی به پوشه دانلود.",
             "spotdl_not_installed": (
                 "❌ spotdl نصب نشده است. " "لطفاً با مدیر تماس بگیرید."
             ),
-            "ffmpeg_installing": "🔧 FFmpeg یافت نشد. در حال نصب FFmpeg...",
-            "ffmpeg_installed": "✅ FFmpeg با موفقیت نصب شد.",
-            "ffmpeg_install_failed": "❌ نصب FFmpeg ناموفق بود: {error}",
+            "ffmpeg_not_installed": (
+                "❌ FFmpeg روی سرور نصب نیست. لطفاً با مدیر تماس بگیرید."
+            ),
+            "spotdl_incompatible": (
+                "❌ نسخه spotDL روی سرور با ربات سازگار نیست. "
+                "لطفاً با مدیر تماس بگیرید."
+            ),
+            "audio_source_unavailable": (
+                "⚠️ هیچ‌کدام از منابع صوتی تنظیم‌شده نتوانستند این مورد را دریافت کنند. "
+                "لطفاً بعداً دوباره تلاش کنید."
+            ),
+            "youtube_signin_required": (
+                "⚠️ یوتیوب درخواست سرور را رد کرد. "
+                "ممکن است مدیر نیاز به تنظیم کوکی یا پروکسی داشته باشد."
+            ),
+            "track_not_found": "❌ آهنگ پیدا نشد. لطفاً لینک Spotify را بررسی کنید.",
+            "track_unavailable": "❌ این آهنگ در حال حاضر در دسترس نیست.",
             # Success messages
             "link_detected": (
                 "✅ لینک معتبر Spotify شناسایی شد!\n"
@@ -162,6 +217,10 @@ class Messages:
                 "🎵 در حال دانلود با کیفیت {quality} kbps...\nلطفاً صبر کنید."
             ),
             "download_complete": "🎵 دانلود شد: {filename}",
+            "partial_download": (
+                "⚠️ نتیجه ناقص بود: {sent} فایل ارسال شد و {failed} ارسال ناموفق بود. "
+                "ممکن است بعضی آهنگ‌های منبع نیز در دسترس نبوده باشند."
+            ),
             "retry_attempt": (
                 "⏳ به حد مجاز رسیده. تلاش مجدد در {} ثانیه... " "(تلاش {}/{})"
             ),
@@ -170,7 +229,7 @@ class Messages:
             ),
             # Button labels
             "quality_128": "🎵 ۱۲۸ کیلوبیت",
-            "quality_320": "🎶 ۳۲۰ کیلوبیت (HQ)",
+            "quality_320": "🎶 ۳۲۰ کیلوبیت",
         },
     }
 

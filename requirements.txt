@@ -2,19 +2,15 @@
 pyTelegramBotAPI>=4.14.0,<5.0.0
 
 # HTTP requests for metadata extraction
-requests>=2.31.0,<3.0.0
+requests>=2.32.3,<3.0.0
 
 # Environment variable management
-python-dotenv>=1.0.0
+python-dotenv>=1.0.0,<2.0.0
 
 # Spotify downloader
-spotdl>=4.2.0,<5.0.0
+# 4.5.2 is the first hotfix release after the 4.5 Spotify/yt-dlp changes.
+# Keep this within the 4.5 CLI contract used by utils/downloader.py.
+spotdl>=4.5.2,<4.6.0
 
 # Optional: For better async support (if needed)
 # aiofiles>=23.0.0,<24.0.0
-
-# Development dependencies (uncomment for development)
-# pytest>=7.4.0,<8.0.0
-# pytest-asyncio>=0.21.0,<1.0.0
-# black>=23.0.0,<24.0.0
-# flake8>=6.0.0,<7.0.0

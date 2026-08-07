@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Tuple
 from pathlib import Path
 
-from dotenv import load_dotenv  # make sure python-dotenv is installed
+from dotenv import load_dotenv
 
 # Base directory of the project (where config.py and .env live)
 BASE_DIR = Path(__file__).resolve().parent
@@ -52,6 +52,24 @@ def _get_int(name: str, default: int) -> int:
     return value
 
 
+def _require_range(name: str, value: int, minimum: int, maximum: int) -> int:
+    """Validate an integer configuration value against an inclusive range."""
+    if not minimum <= value <= maximum:
+        raise RuntimeError(
+            f"Invalid value for {name}: {value!r}. "
+            f"Must be between {minimum} and {maximum}."
+        )
+    return value
+
+
+def _resolve_project_path(value: str) -> Path:
+    """Resolve relative runtime paths against the repository, not process CWD."""
+    path = Path(value).expanduser()
+    if path.is_absolute():
+        return path
+    return (BASE_DIR / path).resolve()
+
+
 @dataclass(frozen=True)
 class Config:
     """
@@ -66,6 +84,10 @@ class Config:
 
     default_quality: int
     max_download_size_mb: int
+    download_timeout_seconds: int
+    upload_timeout_seconds: int
+    upload_retries: int
+    max_concurrent_downloads: int
 
     log_level: str
     default_language: str
@@ -89,14 +111,47 @@ class Config:
         """
 
         # Paths
-        download_dir = Path(_get_str("DOWNLOAD_DIR", str(BASE_DIR / "downloads")))
-        queue_path = Path(
+        download_dir = _resolve_project_path(
+            _get_str("DOWNLOAD_DIR", str(BASE_DIR / "downloads"))
+        )
+        queue_path = _resolve_project_path(
             _get_str("QUEUE_PATH", str(BASE_DIR / "queue" / "queue.json"))
         )
 
         # Download / quality limits
         default_quality = _get_int("DEFAULT_QUALITY", 320)
-        max_download_size_mb = _get_int("MAX_DOWNLOAD_SIZE_MB", 50)
+        if default_quality not in (128, 320):
+            raise RuntimeError(
+                "Invalid value for DEFAULT_QUALITY. Supported values are 128 and 320."
+            )
+
+        # Telegram's hosted Bot API currently accepts audio uploads up to 50 MB.
+        # Reject impossible configurations up front instead of downloading files
+        # that can never be delivered to the user.
+        max_download_size_mb = _require_range(
+            "MAX_DOWNLOAD_SIZE_MB", _get_int("MAX_DOWNLOAD_SIZE_MB", 50), 1, 50
+        )
+        download_timeout_seconds = _require_range(
+            "DOWNLOAD_TIMEOUT_SECONDS",
+            _get_int("DOWNLOAD_TIMEOUT_SECONDS", 900),
+            60,
+            7200,
+        )
+        upload_timeout_seconds = _require_range(
+            "UPLOAD_TIMEOUT_SECONDS",
+            _get_int("UPLOAD_TIMEOUT_SECONDS", 180),
+            30,
+            900,
+        )
+        upload_retries = _require_range(
+            "UPLOAD_RETRIES", _get_int("UPLOAD_RETRIES", 3), 1, 5
+        )
+        max_concurrent_downloads = _require_range(
+            "MAX_CONCURRENT_DOWNLOADS",
+            _get_int("MAX_CONCURRENT_DOWNLOADS", 3),
+            1,
+            10,
+        )
 
         # Rate limiter
         rate_limit_requests = _get_int("RATE_LIMIT_REQUESTS", 20)
@@ -106,7 +161,10 @@ class Config:
         # COOKIE_FILE: path to a cookies.txt exported from a logged-in YouTube
         # session (Netscape format). Strongly recommended on VPS/datacenter IPs,
         # since YouTube frequently blocks anonymous requests from cloud providers.
-        cookie_file = _get_str("COOKIE_FILE", "")
+        cookie_file_raw = _get_str("COOKIE_FILE", "")
+        cookie_file = (
+            str(_resolve_project_path(cookie_file_raw)) if cookie_file_raw else ""
+        )
         # YTDLP_EXTRA_ARGS: raw extra args passed through to yt-dlp via spotdl's
         # --yt-dlp-args, e.g. "--extractor-args youtube:player_client=web_music,default --sleep-requests 1"
         ytdlp_extra_args = _get_str("YTDLP_EXTRA_ARGS", "")
@@ -114,23 +172,45 @@ class Config:
         # cleaner IP reputation than the VPS's own (datacenter IPs get bot-
         # blocked by YouTube much more aggressively than residential ones).
         # This is the "no manual cookies" fix — set it and forget it.
-        # e.g. http://user:pass@residential-proxy-host:port
         proxy_url = _get_str("PROXY_URL", "")
 
         # AUDIO_PROVIDERS: comma-separated fallback order for spotdl's audio
-        # sources. Default is SoundCloud-first because it has no bot-detection
-        # problem at all on a plain VPS — no cookies, no proxy, nothing to
-        # maintain. YouTube is kept as a fallback for tracks SoundCloud
-        # doesn't have, so you still get it when it happens to work.
+        # sources. SoundCloud-first reduces dependence on YouTube from common
+        # datacenter IPs; YouTube Music and YouTube remain fallbacks.
         audio_providers_raw = _get_str(
             "AUDIO_PROVIDERS", "soundcloud,youtube-music,youtube"
         )
         audio_providers: Tuple[str, ...] = tuple(
             p.strip() for p in audio_providers_raw.split(",") if p.strip()
         )
+        supported_audio_providers = {
+            "youtube",
+            "youtube-music",
+            "soundcloud",
+            "bandcamp",
+            "piped",
+        }
+        invalid_providers = [
+            provider
+            for provider in audio_providers
+            if provider not in supported_audio_providers
+        ]
+        if invalid_providers:
+            raise RuntimeError(
+                "Invalid AUDIO_PROVIDERS value(s): "
+                + ", ".join(invalid_providers)
+                + ". Supported values: "
+                + ", ".join(sorted(supported_audio_providers))
+            )
+        if not audio_providers:
+            raise RuntimeError("AUDIO_PROVIDERS must contain at least one provider.")
 
         # Logging
-        log_level = _get_str("LOG_LEVEL", "DEBUG").upper()
+        log_level = _get_str("LOG_LEVEL", "INFO").upper()
+        if log_level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+            raise RuntimeError(
+                "Invalid LOG_LEVEL. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL."
+            )
 
         # Language
         supported_languages: Tuple[str, ...] = ("en", "fa")
@@ -148,6 +228,10 @@ class Config:
             queue_path=queue_path,
             default_quality=default_quality,
             max_download_size_mb=max_download_size_mb,
+            download_timeout_seconds=download_timeout_seconds,
+            upload_timeout_seconds=upload_timeout_seconds,
+            upload_retries=upload_retries,
+            max_concurrent_downloads=max_concurrent_downloads,
             log_level=log_level,
             default_language=default_language,
             rate_limit_requests=rate_limit_requests,
@@ -167,11 +251,6 @@ config = Config.from_env()
 # compatibility with existing imports throughout the codebase.
 
 BOT_TOKEN = _get_str("BOT_TOKEN", "")
-if not BOT_TOKEN:
-    raise RuntimeError(
-        "BOT_TOKEN environment variable is required. "
-        "Set it in your .env file or as a process environment variable."
-    )
 
 # Keep QUEUE_PATH as a plain string for old code that imports it directly
 QUEUE_PATH = str(config.queue_path)

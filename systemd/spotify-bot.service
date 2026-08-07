@@ -1,0 +1,24 @@
+[Unit]
+Description=Telegram Spotify Downloader Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=spotifybot
+Group=spotifybot
+WorkingDirectory=/opt/Telegram-Music-Downloader-Bot
+ExecStart=/opt/Telegram-Music-Downloader-Bot/venv/bin/python bot.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+Environment=HOME=/opt/Telegram-Music-Downloader-Bot/runtime
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/Telegram-Music-Downloader-Bot/downloads /opt/Telegram-Music-Downloader-Bot/queue /opt/Telegram-Music-Downloader-Bot/logs /opt/Telegram-Music-Downloader-Bot/runtime
+
+[Install]
+WantedBy=multi-user.target

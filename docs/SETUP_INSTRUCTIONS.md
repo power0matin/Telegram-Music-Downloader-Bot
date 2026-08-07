@@ -4,8 +4,8 @@
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- FFmpeg (will be installed automatically if missing)
+- Python 3.10–3.14
+- FFmpeg
 - Telegram Bot Token
 
 ### 1. Clone and Setup Environment
@@ -64,8 +64,8 @@ python3 bot.py
 ## 🎯 Features
 
 - ✅ Download Spotify tracks, albums, and playlists
-- ✅ Choose between 128 kbps and 320 kbps quality
-- ✅ Automatic FFmpeg installation
+- ✅ Choose between 128 kbps and 320 kbps MP3 output bitrates
+- ✅ FFmpeg validation with a clear deployment error if it is missing
 - ✅ User-friendly error messages
 - ✅ Rate limiting protection with retry logic
 - ✅ Clean file management
@@ -81,8 +81,8 @@ python3 bot.py
 
 2. **"FFmpeg not found"**
 
-   - The bot will try to install FFmpeg automatically
-   - Manual installation: `sudo apt install ffmpeg` (Ubuntu/Debian)
+   - Install it with: `sudo apt install ffmpeg` (Ubuntu/Debian)
+   - Or use `sudo ./setup_vps.sh`, which installs system dependencies
 
 3. **"BOT_TOKEN not set"**
 
@@ -107,7 +107,7 @@ The bot provides detailed error messages. If you encounter issues:
 
 1. Start a chat with your bot
 2. Send any Spotify link (track, album, or playlist)
-3. Choose your preferred quality (128kbps or 320kbps)
+3. Choose your preferred MP3 output bitrate (128kbps or 320kbps)
 4. Wait for the download and receive your audio files!
 
 ## 🔒 Security Note
@@ -126,12 +126,15 @@ The bot provides detailed error messages. If you encounter issues:
 ├── handlers/            # Bot message handlers
 │   ├── __init__.py
 │   ├── spotify_handler.py
+│   ├── command_handler.py
 │   └── callback_handler.py
 ├── utils/               # Utility modules
 │   ├── __init__.py
 │   ├── downloader.py    # Download functionality
+│   ├── spotify_utils.py
 │   ├── queue_functions.py
-│   └── variables.py
+│   ├── rate_limiter.py
+│   └── i18n.py
 ├── queue/               # Queue storage (auto-created)
 └── downloads/           # Temporary download directory (auto-created)
 ```

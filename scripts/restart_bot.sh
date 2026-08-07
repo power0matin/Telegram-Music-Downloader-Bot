@@ -1,2 +1,4 @@
 #!/bin/bash
-systemctl restart telegram_bot.service
+set -euo pipefail
+
+systemctl restart spotify-bot.service

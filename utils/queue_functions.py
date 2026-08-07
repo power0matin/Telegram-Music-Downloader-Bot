@@ -6,13 +6,16 @@ This module handles queue operations with improved error handling and logging.
 
 import json
 import os
+import tempfile
 import time
+from threading import RLock
 from typing import List, Dict, Any, Optional
 
 from config import config, QUEUE_PATH
 from utils.logging_config import setup_logging
 
 logger = setup_logging(__name__)
+_queue_lock = RLock()
 
 
 def load_queue() -> List[Dict[str, Any]]:
@@ -23,15 +26,20 @@ def load_queue() -> List[Dict[str, Any]]:
         List of queue items
     """
     try:
-        if not os.path.exists(QUEUE_PATH):
-            logger.debug("Queue file does not exist, returning empty queue")
-            return []
+        with _queue_lock:
+            if not os.path.exists(QUEUE_PATH):
+                logger.debug("Queue file does not exist, returning empty queue")
+                return []
 
-        with open(QUEUE_PATH, "r", encoding="utf-8") as f:
-            queue = json.load(f)
+            with open(QUEUE_PATH, "r", encoding="utf-8") as f:
+                queue = json.load(f)
 
-        logger.debug("Loaded queue with %d items", len(queue))
-        return queue
+            if not isinstance(queue, list):
+                logger.error("Queue file does not contain a JSON list; ignoring it")
+                return []
+
+            logger.debug("Loaded queue with %d items", len(queue))
+            return queue
 
     except (json.JSONDecodeError, FileNotFoundError) as e:
         logger.error("Error loading queue: %s", e)
@@ -51,19 +59,32 @@ def save_queue(queue: List[Dict[str, Any]]) -> bool:
     Returns:
         True if successful, False otherwise
     """
+    temp_path: Optional[str] = None
     try:
-        # Ensure directory exists
-        os.makedirs(os.path.dirname(QUEUE_PATH), exist_ok=True)
+        with _queue_lock:
+            queue_dir = os.path.dirname(QUEUE_PATH) or "."
+            os.makedirs(queue_dir, exist_ok=True)
 
-        with open(QUEUE_PATH, "w", encoding="utf-8") as f:
-            json.dump(queue, f, indent=2, ensure_ascii=False)
+            fd, temp_path = tempfile.mkstemp(prefix=".queue-", dir=queue_dir)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(queue, f, indent=2, ensure_ascii=False)
+                f.flush()
+                os.fsync(f.fileno())
 
-        logger.debug("Saved queue with %d items", len(queue))
-        return True
+            os.replace(temp_path, QUEUE_PATH)
+            temp_path = None
+            logger.debug("Saved queue with %d items", len(queue))
+            return True
 
     except Exception as e:
         logger.error("Error saving queue: %s", e)
         return False
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
 
 def add_to_queue(link: str, user_id: int) -> bool:
@@ -78,23 +99,23 @@ def add_to_queue(link: str, user_id: int) -> bool:
         True if added, False if already exists or error
     """
     try:
-        queue = load_queue()
+        with _queue_lock:
+            queue = load_queue()
 
-        # Check for duplicates
-        for item in queue:
-            if item.get("link") == link and item.get("user_id") == user_id:
-                logger.debug("Link already in queue for user %s", user_id)
-                return False
+            # Check for duplicates
+            for item in queue:
+                if item.get("link") == link and item.get("user_id") == user_id:
+                    logger.debug("Link already in queue for user %s", user_id)
+                    return False
 
-        # Add new item with timestamp
-        new_item = {"link": link, "user_id": user_id, "added_at": time.time()}
+            # Add new item with timestamp
+            new_item = {"link": link, "user_id": user_id, "added_at": time.time()}
 
-        queue.append(new_item)
+            queue.append(new_item)
 
-        if save_queue(queue):
-            logger.info("Added link to queue for user %s", user_id)
-            return True
-        else:
+            if save_queue(queue):
+                logger.info("Added link to queue for user %s", user_id)
+                return True
             return False
 
     except Exception as e:
@@ -113,25 +134,23 @@ def get_next_from_queue(user_id: int) -> Optional[Dict[str, Any]]:
         Queue item or None if not found
     """
     try:
-        queue = load_queue()
+        with _queue_lock:
+            queue = load_queue()
 
-        # Find first item for this user
-        for i, item in enumerate(queue):
-            if item.get("user_id") == user_id:
-                # Remove item from queue
-                removed_item = queue.pop(i)
+            # Find first item for this user
+            for i, item in enumerate(queue):
+                if item.get("user_id") == user_id:
+                    removed_item = queue.pop(i)
 
-                # Save updated queue
-                if save_queue(queue):
-                    logger.info("Retrieved item from queue for user %s", user_id)
-                    return removed_item
-                else:
-                    # If save failed, add item back
+                    if save_queue(queue):
+                        logger.info("Retrieved item from queue for user %s", user_id)
+                        return removed_item
+
                     queue.insert(i, removed_item)
                     return None
 
-        logger.debug("No queue items found for user %s", user_id)
-        return None
+            logger.debug("No queue items found for user %s", user_id)
+            return None
 
     except Exception as e:
         logger.error("Error getting from queue: %s", e)
@@ -180,22 +199,22 @@ def clear_user_queue(user_id: int) -> bool:
         True if successful
     """
     try:
-        queue = load_queue()
-        original_size = len(queue)
+        with _queue_lock:
+            queue = load_queue()
+            original_size = len(queue)
 
-        # Remove all items for this user
-        queue = [item for item in queue if item.get("user_id") != user_id]
+            queue = [item for item in queue if item.get("user_id") != user_id]
 
-        removed_count = original_size - len(queue)
+            removed_count = original_size - len(queue)
 
-        if removed_count > 0:
-            if save_queue(queue):
-                logger.info(
-                    "Cleared %d items from queue for user %s", removed_count, user_id
-                )
-                return True
+            if removed_count > 0:
+                if save_queue(queue):
+                    logger.info(
+                        "Cleared %d items from queue for user %s", removed_count, user_id
+                    )
+                    return True
 
-        return removed_count == 0  # True if nothing to remove
+            return removed_count == 0
 
     except Exception as e:
         logger.error("Error clearing user queue: %s", e)
@@ -213,27 +232,27 @@ def cleanup_old_queue_items(max_age_hours: int = 24) -> int:
         Number of items cleaned up
     """
     try:
-        queue = load_queue()
-        current_time = time.time()
-        max_age_seconds = max_age_hours * 3600
+        with _queue_lock:
+            queue = load_queue()
+            current_time = time.time()
+            max_age_seconds = max_age_hours * 3600
 
-        original_size = len(queue)
+            original_size = len(queue)
 
-        # Filter out old items
-        queue = [
-            item
-            for item in queue
-            if current_time - item.get("added_at", 0) < max_age_seconds
-        ]
+            queue = [
+                item
+                for item in queue
+                if current_time - item.get("added_at", 0) < max_age_seconds
+            ]
 
-        cleaned_count = original_size - len(queue)
+            cleaned_count = original_size - len(queue)
 
-        if cleaned_count > 0:
-            if save_queue(queue):
-                logger.info("Cleaned up %d old queue items", cleaned_count)
-                return cleaned_count
+            if cleaned_count > 0:
+                if save_queue(queue):
+                    logger.info("Cleaned up %d old queue items", cleaned_count)
+                    return cleaned_count
 
-        return 0
+            return 0
 
     except Exception as e:
         logger.error("Error cleaning up queue: %s", e)

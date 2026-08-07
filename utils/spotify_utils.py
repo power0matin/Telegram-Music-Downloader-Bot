@@ -341,9 +341,8 @@ class SpotifyMetadataExtractor:
         return metadata
 
 
-# Global instances
+# Stateless validator can be shared safely across handler threads.
 url_validator = SpotifyURLValidator()
-metadata_extractor = SpotifyMetadataExtractor()
 
 
 def validate_spotify_url(url: str) -> bool:
@@ -369,7 +368,11 @@ def get_spotify_metadata(url: str) -> Dict[str, Any]:
     Returns:
         Dictionary with metadata
     """
-    return metadata_extractor.extract_metadata(url)
+    # requests.Session is mutable and not guaranteed to be thread-safe. Each
+    # Telegram handler gets its own short-lived session instead of sharing one
+    # global session across concurrent users.
+    with SpotifyMetadataExtractor() as extractor:
+        return extractor.extract_metadata(url)
 
 
 def sanitize_spotify_url(url: str) -> str:

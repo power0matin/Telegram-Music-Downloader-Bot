@@ -1,11 +1,11 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # ============================================================
 # Telegram Spotify Downloader Bot - VPS Setup Script (Ubuntu)
 # ============================================================
 # This script installs all dependencies and runs the bot
-# on a fresh Ubuntu VPS (20.04/22.04/24.04).
+# on a fresh Ubuntu VPS (22.04/24.04).
 #
 # Usage:
 #   chmod +x setup_vps.sh
@@ -17,6 +17,7 @@ set -e
 
 BOT_USER="spotifybot"
 BOT_DIR="/opt/Telegram-Music-Downloader-Bot"
+BOT_RUNTIME_DIR="${BOT_DIR}/runtime"
 REPO_URL="https://github.com/power0matin/Telegram-Music-Downloader-Bot.git"
 
 # Colors
@@ -34,15 +35,23 @@ if [ "$EUID" -ne 0 ]; then
     error "Please run as root: sudo ./setup_vps.sh"
 fi
 
-# ---- Get BOT_TOKEN from user ----
+# ---- Get BOT_TOKEN for a first-time install ----
 echo ""
 echo "==========================================="
 echo "  Telegram Spotify Downloader Bot Setup"
 echo "==========================================="
 echo ""
-read -p "Enter your Telegram BOT_TOKEN: " BOT_TOKEN
-if [ -z "$BOT_TOKEN" ]; then
-    error "BOT_TOKEN cannot be empty!"
+PRESERVE_ENV=false
+BOT_TOKEN=""
+if [ -f "$BOT_DIR/.env" ] && grep -Eq '^BOT_TOKEN=.+$' "$BOT_DIR/.env"; then
+    PRESERVE_ENV=true
+    info "Existing .env detected; preserving its token and custom settings."
+else
+    read -r -s -p "Enter your Telegram BOT_TOKEN: " BOT_TOKEN
+    echo ""
+    if [ -z "$BOT_TOKEN" ]; then
+        error "BOT_TOKEN cannot be empty!"
+    fi
 fi
 
 # ---- System update & dependencies ----
@@ -61,6 +70,9 @@ apt-get install -y -qq \
 
 # Verify installations
 python3 --version || error "Python3 installation failed"
+if ! python3 -c 'import sys; raise SystemExit(0 if (3, 10) <= sys.version_info[:2] < (3, 15) else 1)'; then
+    error "Python 3.10-3.14 is required by spotDL 4.5.x. Use Ubuntu 22.04 or 24.04."
+fi
 ffmpeg -version >/dev/null 2>&1 || error "FFmpeg installation failed"
 git --version || error "Git installation failed"
 
@@ -78,7 +90,7 @@ fi
 if [ -d "$BOT_DIR" ]; then
     info "Repository already exists at $BOT_DIR, pulling latest..."
     cd "$BOT_DIR"
-    git pull origin main
+    git -c safe.directory="$BOT_DIR" pull --ff-only origin main
 else
     info "Cloning repository..."
     git clone "$REPO_URL" "$BOT_DIR"
@@ -98,27 +110,52 @@ info "Installing Python dependencies..."
 pip install --upgrade pip -q
 pip install -r requirements.txt -q
 
-# Install spotdl (the actual download engine)
-info "Installing spotdl..."
-pip install spotdl -q
+spotdl --version || error "spotDL installation failed"
 
-# ---- Create .env file ----
-info "Creating .env configuration..."
-cat > .env << EOF
+# ---- Runtime directories ----
+mkdir -p downloads queue logs "$BOT_RUNTIME_DIR"
+
+# spotDL 4.5+ recommends a JavaScript runtime for yt-dlp. Install its local
+# Deno binary into the same HOME that the systemd service will use. This is a
+# best-effort optimization; SoundCloud and some YouTube downloads can still
+# work without it.
+if ! command -v deno >/dev/null 2>&1 \
+    && [ ! -x "$BOT_RUNTIME_DIR/.config/spotdl/deno" ] \
+    && [ ! -x "$BOT_RUNTIME_DIR/.spotdl/deno" ]; then
+    info "Installing spotDL Deno runtime..."
+    if HOME="$BOT_RUNTIME_DIR" "$BOT_DIR/venv/bin/spotdl" --download-deno; then
+        info "Deno runtime installed."
+    else
+        warn "Deno installation failed; YouTube fallback reliability may be reduced."
+    fi
+fi
+
+# ---- Create .env file without destroying update-time custom settings ----
+if [ "$PRESERVE_ENV" = true ]; then
+    info "Keeping existing .env configuration."
+else
+    info "Creating .env configuration..."
+    cat > .env << EOF
 BOT_TOKEN=${BOT_TOKEN}
 DOWNLOAD_DIR=${BOT_DIR}/downloads
 QUEUE_PATH=${BOT_DIR}/queue/queue.json
 DEFAULT_QUALITY=320
 MAX_DOWNLOAD_SIZE_MB=50
+DOWNLOAD_TIMEOUT_SECONDS=900
+UPLOAD_TIMEOUT_SECONDS=180
+UPLOAD_RETRIES=3
+MAX_CONCURRENT_DOWNLOADS=3
 LOG_LEVEL=INFO
 DEFAULT_LANGUAGE=en
 RATE_LIMIT_REQUESTS=20
 RATE_LIMIT_WINDOW_SECONDS=60
+AUDIO_PROVIDERS=soundcloud,youtube-music,youtube
 EOF
+fi
+chmod 600 .env
 
 # ---- Create directories ----
-mkdir -p downloads queue logs
-chmod 755 downloads queue logs
+chmod 755 downloads queue logs "$BOT_RUNTIME_DIR"
 
 # ---- Set ownership ----
 chown -R "$BOT_USER:$BOT_USER" "$BOT_DIR"
@@ -128,7 +165,7 @@ info "Creating systemd service..."
 cat > /etc/systemd/system/spotify-bot.service << EOF
 [Unit]
 Description=Telegram Spotify Downloader Bot
-After=network.target
+After=network-online.target
 Wants=network-online.target
 
 [Service]
@@ -146,10 +183,12 @@ StandardError=journal
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=${BOT_DIR}/downloads ${BOT_DIR}/queue ${BOT_DIR}/logs
+PrivateTmp=true
+ReadWritePaths=${BOT_DIR}/downloads ${BOT_DIR}/queue ${BOT_DIR}/logs ${BOT_RUNTIME_DIR}
 
 # Environment
 Environment=PYTHONUNBUFFERED=1
+Environment=HOME=${BOT_RUNTIME_DIR}
 
 [Install]
 WantedBy=multi-user.target
@@ -159,7 +198,7 @@ EOF
 info "Enabling and starting the bot service..."
 systemctl daemon-reload
 systemctl enable spotify-bot.service
-systemctl start spotify-bot.service
+systemctl restart spotify-bot.service
 
 # ---- Verify ----
 sleep 2
