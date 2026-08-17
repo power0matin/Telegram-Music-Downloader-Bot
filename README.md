@@ -11,7 +11,6 @@
 <!-- repo-badges:end -->
 
 <p align="center">
-  <a href="#"><img src="https://badges.strrl.dev/visits/power0matin/Telegram-Music-Downloader-Bot?style=flat&labelColor=333333&logoColor=E7E7E7&label=Visits&logo=github" alt="Visits badge" /></a>
   <a href="#"><img src="https://img.shields.io/github/stars/power0matin/Telegram-Music-Downloader-Bot?style=flat&labelColor=333333&logoColor=E7E7E7&color=EEAA00&label=Stars&logo=github" alt="Stars badge" /></a>
   <a href="#"><img src="https://img.shields.io/github/repo-size/power0matin/Telegram-Music-Downloader-Bot?style=flat&labelColor=333333&logoColor=E7E7E7&color=007BFF&label=Repo%20Size&logo=github" alt="Repo size badge" /></a>
 </p>
