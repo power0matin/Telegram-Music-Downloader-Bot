@@ -1,0 +1,28 @@
+name: Remove legacy duplicate Stars once
+on:
+  push:
+    paths: [".github/workflows/cleanup-legacy-stars-once.yml"]
+permissions: {contents: write}
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          p=Path('README.md'); s=p.read_text()
+          pat=r'\s*<a href="#">\s*<img[^>]*img\.shields\.io/github/stars/power0matin/Telegram-Music-Downloader-Bot[^>]*>\s*</a>'
+          s=re.sub(pat,'',s,flags=re.S)
+          p.write_text(s.rstrip()+'\n')
+          PY
+      - run: |
+          git config user.name "Matin Shahabadi"
+          git config user.email "116592301+power0matin@users.noreply.github.com"
+          git rm -f .github/workflows/cleanup-legacy-stars-once.yml
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "docs: remove duplicate legacy stars badge"
+          git push
