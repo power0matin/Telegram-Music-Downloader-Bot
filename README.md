@@ -10,6 +10,8 @@
 </p>
 <!-- repo-badges:end -->
 
+> **Official project page:** [matinshahabadi.ir/projects/telegram-music-downloader-bot/](https://matinshahabadi.ir/projects/telegram-music-downloader-bot/)
+
 <p align="center">
   <a href="#"><img src="https://img.shields.io/github/repo-size/power0matin/Telegram-Music-Downloader-Bot?style=flat&labelColor=333333&logoColor=E7E7E7&color=007BFF&label=Repo%20Size&logo=github" alt="Repo size badge" /></a>
 </p>
