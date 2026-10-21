@@ -1,4 +1,4 @@
-# 🎵 Spotify Downloader Bot
+<h1 align="center">🎵 Spotify Downloader Bot</h1>
 
 <!-- repo-badges:start -->
 <p align="center">
@@ -28,7 +28,6 @@
 [🚀 Quick Start](#-quick-start) • [🛠️ Setup](#️-installation--setup) • [📖 Documentation](#-documentation)
 
 </div>
-
 
 ## ✨ Features
 
@@ -106,7 +105,6 @@ export LOG_LEVEL="INFO"
 python bot.py
 ```
 
-
 ## 🛠️ Installation & Setup
 
 ### Environment Variables
@@ -131,7 +129,6 @@ python bot.py
 | `PROXY_URL`                 | Optional HTTP(S) proxy for audio providers | —        |
 | `YTDLP_EXTRA_ARGS`          | Optional raw yt-dlp arguments passed by spotDL | —    |
 
-
 ## 🚀 Production Deployment
 
 ### Systemd (Recommended)
@@ -151,7 +148,6 @@ Check status/logs:
 sudo systemctl status spotify-bot
 sudo journalctl -u spotify-bot -f
 ```
-
 
 ## 📖 Documentation
 
@@ -215,7 +211,6 @@ spotify:album:1DFixLWuPkv3KT3TnV35m3
 https://open.spotify.com/de/track/4iV5W9uYEdYUVa79Axb7Rh
 ```
 
-
 ## 🔧 Advanced Configuration
 
 ### Custom Messages
@@ -239,7 +234,6 @@ rate_limiter = RateLimiter(
 ```bash
 export LOG_LEVEL="DEBUG"      # DEBUG, INFO, WARNING, ERROR, CRITICAL
 ```
-
 
 ## 🐛 Troubleshooting
 
@@ -276,7 +270,6 @@ grep "ERROR" logs/spotify_bot.log
 grep "Download" logs/spotify_bot.log
 ```
 
-
 ## 🤝 Contributing
 
 1. Fork the repo
@@ -294,16 +287,13 @@ python bot.py
 pytest -q
 ```
 
-
 ## 📜 License
 
 MIT — see [LICENSE](LICENSE).
 
-
 ## ⚠️ Disclaimer
 
 This bot is for educational use only. You are responsible for complying with Spotify’s Terms of Service and copyright laws. The authors assume no liability for misuse.
-
 
 ## 📬 Contact & Support
 
@@ -316,10 +306,25 @@ This bot is for educational use only. You are responsible for complying with Spo
 * 🧑‍💻 GitHub: [power0matin](https://github.com/power0matin)
 * 💼 LinkedIn: [matin-shahabadi](https://www.linkedin.com/in/matin-shahabadi)
 
-
 <div align="center">
 
 **Made with ❤️ by [power0matin](https://github.com/power0matin)**
 ⭐ If this project helps you, **please star the repo**!
 
 </div>
+
+<!-- Copy-paste in your Readme.md file -->
+<p align="center">
+  <a href="https://next.ossinsight.io/widgets/official/analyze-repo-stars-history?repo_id=843528411" target="_blank" style="display: block" align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://next.ossinsight.io/widgets/official/analyze-repo-stars-history/thumbnail.png?repo_id=843528411&amp;image_size=auto&amp;color_scheme=dark" width="721" height="auto">
+      <img alt="Star History of power0matin/Telegram-Music-Downloader-Bot" src="https://next.ossinsight.io/widgets/official/analyze-repo-stars-history/thumbnail.png?repo_id=843528411&amp;image_size=auto&amp;color_scheme=light" width="721" height="auto">
+    </picture>
+  </a>
+</p>
+
+<!-- Made with [OSS Insight](https://ossinsight.io/) -->
+
+<p align="center">
+  Created by <a href="https://github.com/power0matin">power0matin</a>
+</p>
