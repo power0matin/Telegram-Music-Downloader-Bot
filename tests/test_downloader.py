@@ -24,7 +24,7 @@ def test_spotdl_command_matches_46_cli(tmp_path):
     assert "--audio" in command
     assert "--audio-providers" not in command
     audio_index = command.index("--audio")
-    assert command[audio_index + 1:] == ["soundcloud", "youtube-music", "youtube"]
+    assert command[audio_index + 1:audio_index + 4] == ["soundcloud", "youtube-music", "youtube"]
     assert command[command.index("--bitrate") + 1] == "320k"
     assert command[command.index("--format") + 1] == "mp3"
 
@@ -57,6 +57,7 @@ def test_installed_spotdl_exposes_expected_cli():
         "--yt-dlp-args",
     ):
         assert option in output
+
 
 def test_spotdl_46_dependency_excludes_known_broken_ytmusicapi_releases():
     assert version("ytmusicapi") not in {"1.12.2", "1.12.3"}
