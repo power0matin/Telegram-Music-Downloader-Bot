@@ -300,7 +300,6 @@ CI پروژه علاوه بر تست‌ها، کامپایل فایل‌های P
 ## پشتیبانی و مجوز
 
 - گزارش باگ: [GitHub Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues)
-- پیشنهاد یا گفتگو: [GitHub Discussions](https://github.com/power0matin/Telegram-Music-Downloader-Bot/discussions)
 - مجوز: [MIT](../LICENSE)
 - صفحهٔ پروژه: [matinshahabadi.ir](https://matinshahabadi.ir/projects/telegram-music-downloader-bot/)
 
