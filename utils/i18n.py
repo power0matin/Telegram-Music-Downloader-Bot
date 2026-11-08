@@ -72,8 +72,8 @@ class Messages:
                 "Please try again."
             ),
             "file_too_large": (
-                "❌ The downloaded audio is larger than the {limit} MB Telegram upload "
-                "limit configured for this bot."
+                "❌ The downloaded audio exceeds this bot's safe Telegram upload limit "
+                "of {limit} MB."
             ),
             "directory_error": "❌ Error accessing download directory.",
             "spotdl_not_installed": (
@@ -181,8 +181,7 @@ class Messages:
                 "لطفاً دوباره تلاش کنید."
             ),
             "file_too_large": (
-                "❌ فایل صوتی دانلودشده از محدودیت {limit} مگابایتی ارسال تلگرام "
-                "برای این ربات بزرگ‌تر است."
+                "❌ حجم فایل صوتی از سقف امن {limit} مگابایتی ارسال تلگرام برای این ربات بیشتر است."
             ),
             "directory_error": "❌ خطا در دسترسی به پوشه دانلود.",
             "spotdl_not_installed": (

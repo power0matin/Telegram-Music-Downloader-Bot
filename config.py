@@ -7,6 +7,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+# Leave 1 MB of headroom below Telegram's documented 50 MB sendAudio limit.
+TELEGRAM_AUDIO_SAFE_MAX_BYTES = 49_000_000
+
 # Base directory of the project (where config.py and .env live)
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -84,6 +87,7 @@ class Config:
 
     default_quality: int
     max_download_size_mb: int
+    max_download_size_bytes: int
     download_timeout_seconds: int
     upload_timeout_seconds: int
     upload_retries: int
@@ -125,11 +129,15 @@ class Config:
                 "Invalid value for DEFAULT_QUALITY. Supported values are 128 and 320."
             )
 
-        # Telegram's hosted Bot API currently accepts audio uploads up to 50 MB.
-        # Reject impossible configurations up front instead of downloading files
-        # that can never be delivered to the user.
+        # Keep the historical MAX_DOWNLOAD_SIZE_MB interpretation as MiB so
+        # existing .env files retain their meaning. The effective upload ceiling
+        # is nevertheless capped below Telegram's documented 50 MB limit.
         max_download_size_mb = _require_range(
             "MAX_DOWNLOAD_SIZE_MB", _get_int("MAX_DOWNLOAD_SIZE_MB", 50), 1, 50
+        )
+        max_download_size_bytes = min(
+            max_download_size_mb * 1024 * 1024,
+            TELEGRAM_AUDIO_SAFE_MAX_BYTES,
         )
         download_timeout_seconds = _require_range(
             "DOWNLOAD_TIMEOUT_SECONDS",
@@ -228,6 +236,7 @@ class Config:
             queue_path=queue_path,
             default_quality=default_quality,
             max_download_size_mb=max_download_size_mb,
+            max_download_size_bytes=max_download_size_bytes,
             download_timeout_seconds=download_timeout_seconds,
             upload_timeout_seconds=upload_timeout_seconds,
             upload_retries=upload_retries,
@@ -255,4 +264,10 @@ BOT_TOKEN = _get_str("BOT_TOKEN", "")
 # Keep QUEUE_PATH as a plain string for old code that imports it directly
 QUEUE_PATH = str(config.queue_path)
 
-__all__ = ["config", "BOT_TOKEN", "QUEUE_PATH", "Config"]
+__all__ = [
+    "config",
+    "BOT_TOKEN",
+    "QUEUE_PATH",
+    "Config",
+    "TELEGRAM_AUDIO_SAFE_MAX_BYTES",
+]

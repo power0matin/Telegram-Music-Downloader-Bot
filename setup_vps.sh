@@ -154,6 +154,7 @@ BOT_TOKEN=${BOT_TOKEN}
 DOWNLOAD_DIR=${BOT_DIR}/downloads
 QUEUE_PATH=${BOT_DIR}/queue/queue.json
 DEFAULT_QUALITY=320
+# Legacy variable name; value is interpreted as MiB. Effective audio cap: 49,000,000 bytes.
 MAX_DOWNLOAD_SIZE_MB=50
 DOWNLOAD_TIMEOUT_SECONDS=900
 UPLOAD_TIMEOUT_SECONDS=180

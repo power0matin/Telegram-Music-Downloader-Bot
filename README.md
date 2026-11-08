@@ -95,6 +95,7 @@ export BOT_TOKEN="your_bot_token_here"
 export RATE_LIMIT_REQUESTS="20"
 export RATE_LIMIT_WINDOW_SECONDS="60"
 export DEFAULT_QUALITY="320"
+# Legacy setting is interpreted as MiB; uploads are capped at 49,000,000 bytes.
 export MAX_DOWNLOAD_SIZE_MB="50"
 export LOG_LEVEL="INFO"
 ```
@@ -114,7 +115,7 @@ python bot.py
 | `BOT_TOKEN`                 | **Required** — Telegram bot token      | —           |
 | `DOWNLOAD_DIR`              | Storage directory for downloads        | `downloads` |
 | `QUEUE_PATH`                | Queue tracking file                     | `queue/queue.json` |
-| `MAX_DOWNLOAD_SIZE_MB`      | Max file size (MB)                     | `50`        |
+| `MAX_DOWNLOAD_SIZE_MB`      | Legacy MiB setting; effective audio cap is 49,000,000 bytes | `50` |
 | `RATE_LIMIT_REQUESTS`       | Max requests per window                | `20`        |
 | `RATE_LIMIT_WINDOW_SECONDS` | Window length (seconds)                | `60`        |
 | `DEFAULT_QUALITY`           | Default audio quality (`128` or `320`) | `320`       |

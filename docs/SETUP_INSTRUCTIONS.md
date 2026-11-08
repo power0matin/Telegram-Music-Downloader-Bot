@@ -36,6 +36,10 @@ sudo PYTHON_BIN=python3.11 ./setup_vps.sh
 
 The installer validates the selected interpreter and recreates an existing virtual environment only when its Python version is unsupported.
 
+### Telegram audio upload size
+
+`MAX_DOWNLOAD_SIZE_MB` is a legacy setting name and continues to use its original MiB (1,048,576-byte) interpretation. To avoid breaking existing `.env` files, its default remains `50`. The actual audio file ceiling is capped at 49,000,000 bytes (49 decimal MB), leaving headroom below Telegram's documented 50 MB `sendAudio` limit. Existing deployments do not need to change this setting.
+
 ### 2. Get Telegram Bot Token
 
 1. Start a chat with [@BotFather](https://t.me/BotFather) on Telegram

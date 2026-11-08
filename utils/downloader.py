@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+from enum import Enum
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
@@ -59,6 +60,19 @@ class DependencyError(DownloadError):
     pass
 
 
+class AudioUploadStatus(Enum):
+    """Outcome of one Telegram audio upload attempt."""
+
+    SENT = "sent"
+    FAILED = "failed"
+    SKIPPED_TOO_LARGE = "skipped_too_large"
+
+
+def _get_audio_upload_limit_bytes() -> int:
+    """Return the one effective byte ceiling used for filtering and uploads."""
+    return config.max_download_size_bytes
+
+
 class SpotifyDownloader:
     """
     Enhanced Spotify downloader with better error handling and features.
@@ -72,9 +86,7 @@ class SpotifyDownloader:
             download_dir: Base download directory (uses config default if None)
         """
         self.download_dir = download_dir or config.download_dir
-        self.max_file_size = (
-            config.max_download_size_mb * 1024 * 1024
-        )  # Convert to bytes
+        self.max_file_size = _get_audio_upload_limit_bytes()
 
         # Ensure download directory exists
         Path(self.download_dir).mkdir(parents=True, exist_ok=True)
@@ -684,8 +696,8 @@ def _send_audio_with_retry(
     message: Message,
     file_path: str,
     caption: str,
-) -> bool:
-    """Upload one audio file with a bounded retry for transient network errors."""
+) -> AudioUploadStatus:
+    """Upload one audio file after a byte-limit check, retrying transient errors."""
     send_kwargs: Dict[str, Any] = {
         "caption": caption,
         "timeout": config.upload_timeout_seconds,
@@ -696,10 +708,25 @@ def _send_audio_with_retry(
 
     for attempt in range(1, config.upload_retries + 1):
         try:
+            file_size = os.path.getsize(file_path)
+        except OSError as exc:
+            logger.warning("Could not inspect audio file before upload %s: %s", file_path, exc)
+            return AudioUploadStatus.FAILED
+
+        if file_size > _get_audio_upload_limit_bytes():
+            logger.warning(
+                "Skipping audio upload for %s: %s bytes exceeds the %s-byte limit",
+                file_path,
+                file_size,
+                _get_audio_upload_limit_bytes(),
+            )
+            return AudioUploadStatus.SKIPPED_TOO_LARGE
+
+        try:
             # Re-open on every attempt so retries always upload from byte zero.
             with open(file_path, "rb") as audio_file:
                 bot.send_audio(chat_id, audio_file, **send_kwargs)
-            return True
+            return AudioUploadStatus.SENT
         except Exception as exc:  # pyTelegramBotAPI wraps several network errors
             retryable = _is_retryable_upload_error(exc)
             if not retryable or attempt >= config.upload_retries:
@@ -709,7 +736,7 @@ def _send_audio_with_retry(
                     attempt,
                     exc,
                 )
-                return False
+                return AudioUploadStatus.FAILED
 
             delay = _upload_retry_delay(exc, attempt)
             logger.warning(
@@ -720,7 +747,7 @@ def _send_audio_with_retry(
             )
             time.sleep(delay)
 
-    return False
+    return AudioUploadStatus.FAILED
 
 
 def _build_audio_caption(messages, result: DownloadResult, file_path: str) -> str:
@@ -802,7 +829,8 @@ def download_and_send(
                 error_message = messages.get("track_unavailable")
             elif "size limit" in error_text or "too large" in error_text:
                 error_message = messages.get(
-                    "file_too_large", limit=config.max_download_size_mb
+                    "file_too_large",
+                    limit=round(downloader.max_file_size / 1_000_000, 2),
                 )
             elif "not found" in error_text or "no files" in error_text:
                 error_message = messages.get("no_files_downloaded")
@@ -829,15 +857,25 @@ def download_and_send(
 
         files_sent = 0
         files_failed = 0
+        files_skipped_before_upload = 0
         for file_path in result.files or []:
             caption = _build_audio_caption(messages, result, file_path)
-            if _send_audio_with_retry(bot, chat_id, message, file_path, caption):
+            upload_status = _send_audio_with_retry(
+                bot, chat_id, message, file_path, caption
+            )
+            if upload_status is AudioUploadStatus.SENT:
                 files_sent += 1
+            elif upload_status is AudioUploadStatus.SKIPPED_TOO_LARGE:
+                files_skipped_before_upload += 1
             else:
                 files_failed += 1
 
+        total_skipped_files = (
+            result.skipped_file_count + files_skipped_before_upload
+        )
         has_partial_result = bool(
             files_failed
+            or files_skipped_before_upload
             or result.warning
             or result.source_failed_count
             or result.skipped_file_count
@@ -853,7 +891,7 @@ def download_and_send(
                         sent=files_sent,
                         failed=files_failed,
                         source_failed=result.source_failed_count,
-                        skipped=result.skipped_file_count,
+                        skipped=total_skipped_files,
                     ),
                 )
             else:
@@ -868,7 +906,7 @@ def download_and_send(
                     sent=files_sent,
                     failed=files_failed,
                     source_failed=result.source_failed_count,
-                    skipped=result.skipped_file_count,
+                    skipped=total_skipped_files,
                 ),
             )
 
