@@ -57,6 +57,19 @@ You need:
 
 FFmpeg is **not required** for the default preview-only mode. It is used only by the optional audio-processing path.
 
+**Ubuntu 24.04:** install the local tools with:
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv python3-pip
+```
+
+Ubuntu 22.04's default Python is too old for this project. Install Python 3.11–3.14 separately before continuing.
+
+**Windows:** install Python from [python.org](https://www.python.org/downloads/) and Git from [git-scm.com](https://git-scm.com/downloads). During Python setup, enable the option that adds Python to PATH.
+
+**macOS:** install Python 3.11–3.14 from [python.org](https://www.python.org/downloads/). If Git is not installed, macOS may offer to install the Xcode Command Line Tools when you first run `git`.
+
 Check your Python version:
 
 ```bash
