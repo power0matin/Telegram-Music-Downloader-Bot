@@ -3,6 +3,7 @@
 <!-- repo-badges:start -->
 <p align="center">
   <a href="https://hits.sh/github.com/power0matin/Telegram-Music-Downloader-Bot/"><img src="https://hits.sh/github.com/power0matin/Telegram-Music-Downloader-Bot.svg?style=flat-square&amp;label=Views&amp;labelColor=18181B&amp;color=0EA5E9&amp;logo=github" alt="Repository Views"/></a>
+  <a href="https://github.com/power0matin/Telegram-Music-Downloader-Bot/releases/latest"><img src="https://img.shields.io/github/v/release/power0matin/Telegram-Music-Downloader-Bot?style=flat-square&amp;label=Release" alt="Latest release"/></a>
   <a href="https://github.com/power0matin/Telegram-Music-Downloader-Bot/stargazers"><img src="https://img.shields.io/github/stars/power0matin/Telegram-Music-Downloader-Bot?style=flat-square&amp;label=Stars&amp;labelColor=18181B&amp;color=F59E0B&amp;logo=github&amp;logoColor=white" alt="GitHub Stars"/></a>
   <a href="https://github.com/power0matin/Telegram-Music-Downloader-Bot/forks"><img src="https://img.shields.io/github/forks/power0matin/Telegram-Music-Downloader-Bot?style=flat-square&amp;label=Forks&amp;labelColor=18181B&amp;color=6366F1&amp;logo=github&amp;logoColor=white" alt="GitHub Forks"/></a>
   <a href="https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues"><img src="https://img.shields.io/github/issues/power0matin/Telegram-Music-Downloader-Bot?style=flat-square&amp;label=Issues&amp;labelColor=18181B&amp;color=22C55E&amp;logo=github&amp;logoColor=white" alt="GitHub Issues"/></a>
@@ -25,7 +26,7 @@
 
 **A Telegram bot that previews limited Spotify metadata and links users back to Spotify. Audio-file delivery is disabled by default.**
 
-[🚀 Quick Start](#-quick-start) • [🛠️ Setup](#️-installation--setup) • [📖 Documentation](#-documentation)
+[🚀 Quick Start](#-quick-start) • [🛠️ Setup](#️-installation--setup) • [📖 Documentation](#-documentation) • [📝 Changelog](CHANGELOG.md)
 
 </div>
 
@@ -116,6 +117,7 @@ In the default configuration, sending a Spotify URL returns a limited metadata p
 | Variable                    | Description                            | Default     |
 | --------------------------- | -------------------------------------- | ----------- |
 | `BOT_TOKEN`                 | **Required** — Telegram bot token      | —           |
+| `ENABLE_AUTHORIZED_AUDIO_DELIVERY` | Keep false for preview-only mode; true requires all documented permissions and licences | `false` |
 | `DOWNLOAD_DIR`              | Temporary storage used only by authorized audio-delivery mode | `downloads` |
 | `QUEUE_PATH`                | Queue tracking file                     | `queue/queue.json` |
 | `MAX_DOWNLOAD_SIZE_MB`      | Authorized audio mode only; legacy MiB setting, effective cap 49,000,000 bytes | `50` |
