@@ -47,6 +47,10 @@ class Messages:
             ),
             "invalid_callback": "❌ Invalid callback data.",
             "link_not_found": "❌ Link not found or expired.",
+            "worker_start_failed_retry": (
+                "⚠️ The download worker could not start. Your request is still available; "
+                "tap a quality button below to retry."
+            ),
             "server_busy": (
                 "⏳ All download slots are busy. Please tap the quality button again "
                 "in a moment."
@@ -157,6 +161,10 @@ class Messages:
             ),
             "invalid_callback": "❌ داده callback نامعتبر است.",
             "link_not_found": "❌ لینک یافت نشد یا منقضی شده است.",
+            "worker_start_failed_retry": (
+                "⚠️ شروع پردازش دانلود ناموفق بود، اما درخواست شما هنوز معتبر است؛ "
+                "برای تلاش دوباره یکی از دکمه‌های کیفیت زیر را بزنید."
+            ),
             "server_busy": (
                 "⏳ ظرفیت دانلود ربات فعلاً پر است. کمی بعد دوباره همان دکمه کیفیت "
                 "را بزنید."

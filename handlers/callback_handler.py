@@ -9,7 +9,7 @@ import threading
 from threading import Semaphore
 
 from telebot import TeleBot
-from telebot.types import CallbackQuery
+from telebot.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 from config import config
 from utils.logging_config import setup_logging, log_user_action
@@ -20,6 +20,7 @@ from .spotify_handler import (
     consume_stored_link_data,
     format_metadata_html,
     get_stored_link_data,
+    restore_stored_link_data,
 )
 
 logger = setup_logging(__name__)
@@ -169,6 +170,20 @@ def register_callback_handlers(bot: TeleBot):
             except Exception as status_error:
                 logger.warning("Failed to send fallback progress message: %s", status_error)
 
+        # A worker can finish immediately after start, while the caller is still
+        # handling a rare start() exception. Guard the semaphore release so each
+        # reserved slot is returned exactly once on every path.
+        slot_release_lock = threading.Lock()
+        slot_released = False
+
+        def _release_worker_slot_once():
+            nonlocal slot_released
+            with slot_release_lock:
+                if slot_released:
+                    return
+                slot_released = True
+            _download_semaphore.release()
+
         def _download_worker():
             try:
                 download_and_send(
@@ -188,19 +203,88 @@ def register_callback_handlers(bot: TeleBot):
                 except Exception:
                     logger.exception("Failed to report worker error to chat %s", chat_id)
             finally:
-                _download_semaphore.release()
+                _release_worker_slot_once()
 
+        worker_thread = None
         try:
-            threading.Thread(target=_download_worker, daemon=True).start()
+            worker_thread = threading.Thread(target=_download_worker, daemon=True)
+            worker_thread.start()
         except Exception:
-            _download_semaphore.release()
+            # A RuntimeError after the OS thread was created must not cause the
+            # request to be restored while a live worker is already processing it.
+            worker_started = (
+                worker_thread is not None and worker_thread.ident is not None
+            )
             logger.exception("Failed to start download worker for user %s", user_id)
+
+            if worker_started:
+                return
+
+            restored = False
             try:
-                bot.send_message(chat_id, messages.get("unexpected_error"))
+                restored = restore_stored_link_data(link_id, user_id, link_data)
             except Exception:
                 logger.exception(
-                    "Failed to report worker start failure to chat %s", chat_id
+                    "Failed to restore pending link %s for user %s",
+                    link_id,
+                    user_id,
                 )
+
+            _release_worker_slot_once()
+
+            if not restored:
+                # The original expiry may have elapsed during thread startup.
+                try:
+                    bot.send_message(chat_id, messages.get("link_not_found"))
+                except Exception:
+                    logger.exception(
+                        "Failed to report expired pending link to chat %s", chat_id
+                    )
+                return
+
+            retry_markup = InlineKeyboardMarkup(row_width=2)
+            retry_markup.add(
+                InlineKeyboardButton(
+                    messages.get("quality_128"),
+                    callback_data=f"quality|128|{link_id}",
+                ),
+                InlineKeyboardButton(
+                    messages.get("quality_320"),
+                    callback_data=f"quality|320|{link_id}",
+                ),
+            )
+            retry_text = messages.get("link_detected")
+            metadata_text = format_metadata_html(
+                metadata,
+                link_label=messages.get("open_on_spotify"),
+            )
+            if metadata_text:
+                retry_text += f"\n\n{metadata_text}"
+            retry_text += f"\n\n{messages.get('worker_start_failed_retry')}"
+
+            status_kwargs = {"reply_markup": retry_markup, "parse_mode": "HTML"}
+            thread_id = getattr(call.message, "message_thread_id", None)
+            if thread_id is not None:
+                status_kwargs["message_thread_id"] = thread_id
+
+            try:
+                bot.send_message(chat_id, retry_text, **status_kwargs)
+            except Exception:
+                logger.exception(
+                    "Failed to send retry keyboard for pending link %s", link_id
+                )
+                try:
+                    bot.edit_message_text(
+                        chat_id=chat_id,
+                        message_id=message_id,
+                        text=retry_text,
+                        **status_kwargs,
+                    )
+                except Exception:
+                    logger.exception(
+                        "Failed to restore retry keyboard for pending link %s",
+                        link_id,
+                    )
 
     @bot.callback_query_handler(func=lambda call: True)
     def handle_unknown_callback(call: CallbackQuery):
