@@ -1,4 +1,4 @@
-<h1 align="center">🎵 Spotify Downloader Bot</h1>
+<h1 align="center">🎵 Spotify Link Preview Bot</h1>
 
 <!-- repo-badges:start -->
 <p align="center">
@@ -20,10 +20,10 @@
 
 ![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge\&logo=telegram)
 ![Python](https://img.shields.io/badge/Python-3.11--3.14-blue?style=for-the-badge\&logo=python)
-![Spotify](https://img.shields.io/badge/Spotify-Downloader-green?style=for-the-badge\&logo=spotify)
+![Spotify](https://img.shields.io/badge/Spotify-Link%20Preview-green?style=for-the-badge\&logo=spotify)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
-**A Telegram bot that matches Spotify metadata to downloadable audio and sends the result back to the requesting chat.**
+**A Telegram bot that previews limited Spotify metadata and links users back to Spotify. Audio-file delivery is disabled by default.**
 
 [🚀 Quick Start](#-quick-start) • [🛠️ Setup](#️-installation--setup) • [📖 Documentation](#-documentation)
 
@@ -33,14 +33,15 @@
 
 ### 🎵 Core
 
-* **Spotify content types**: Tracks, albums, playlists
-* **MP3 bitrate selection**: 128 kbps / 320 kbps
-* **Metadata extraction**: Artist, title, album
-* **Status updates**: Download state and delivery feedback
+* **Spotify content links**: Tracks, albums, playlists
+* **Metadata preview**: Limited title/creator details through Spotify's official oEmbed endpoint
+* **Spotify attribution**: Direct link to open the corresponding item on Spotify
 * **Smart validation**: Strict Spotify URL checks
+* **Safe default**: No third-party audio is downloaded or forwarded
 
-> **Audio quality note:** 320 kbps selects the MP3 output bitrate. It cannot
-> create source quality that the selected audio provider does not supply.
+> **Optional audio delivery:** The legacy audio-delivery path is disabled by default.
+> It must not be enabled without the documented platform permissions and rights-holder
+> licences. See [docs/COMPLIANCE.md](docs/COMPLIANCE.md).
 
 ### 🛡️ Production
 
@@ -48,13 +49,13 @@
 * **Error handling**: Robust recovery with helpful messages
 * **Logging**: Structured logging with rotation
 * **Config management**: Environment-driven settings
-* **Dependencies**: Verified FFmpeg + spotDL 4.6.0 compatibility
+* **Optional audio dependencies**: FFmpeg + spotDL 4.6.0 (used only when authorized audio delivery is enabled)
 
 ### 🌐 UX
 
 * **Multilingual**: English & Persian (Farsi)
 * **Commands**: `/start`, `/help`
-* **Inline UI**: Quality selector keyboards
+* **Inline UI**: Spotify link previews; quality selection only in authorized audio-delivery mode
 * **File hygiene**: Auto-cleanup & size limits
 
 ### 🔧 Developer
@@ -71,7 +72,7 @@
 * **Python 3.11–3.14** (required by spotDL 4.6.x)
 * **Telegram Bot Token** (from [@BotFather](https://t.me/BotFather))
 * **Git**
-* **FFmpeg**
+* **FFmpeg** (required only if authorized audio delivery is enabled)
 * **Ubuntu 24.04** for the automated VPS installer; Ubuntu 22.04 requires a separately installed Python 3.11–3.14 runtime
 
 ### 1) Clone & Setup
@@ -106,6 +107,8 @@ export LOG_LEVEL="INFO"
 python bot.py
 ```
 
+In the default configuration, sending a Spotify URL returns a limited metadata preview and a direct Spotify link. The bot does not download or forward audio. Read [docs/COMPLIANCE.md](docs/COMPLIANCE.md) before considering the optional audio-delivery path.
+
 ## 🛠️ Installation & Setup
 
 ### Environment Variables
@@ -113,22 +116,22 @@ python bot.py
 | Variable                    | Description                            | Default     |
 | --------------------------- | -------------------------------------- | ----------- |
 | `BOT_TOKEN`                 | **Required** — Telegram bot token      | —           |
-| `DOWNLOAD_DIR`              | Storage directory for downloads        | `downloads` |
+| `DOWNLOAD_DIR`              | Temporary storage used only by authorized audio-delivery mode | `downloads` |
 | `QUEUE_PATH`                | Queue tracking file                     | `queue/queue.json` |
-| `MAX_DOWNLOAD_SIZE_MB`      | Legacy MiB setting; effective audio cap is 49,000,000 bytes | `50` |
+| `MAX_DOWNLOAD_SIZE_MB`      | Authorized audio mode only; legacy MiB setting, effective cap 49,000,000 bytes | `50` |
 | `RATE_LIMIT_REQUESTS`       | Max requests per window                | `20`        |
 | `RATE_LIMIT_WINDOW_SECONDS` | Window length (seconds)                | `60`        |
-| `DEFAULT_QUALITY`           | Default audio quality (`128` or `320`) | `320`       |
+| `DEFAULT_QUALITY`           | Authorized audio mode only: MP3 output bitrate | `320`       |
 | `LOG_LEVEL`                 | Logging level                          | `INFO`      |
 | `DEFAULT_LANGUAGE`          | Default locale                         | `en`        |
-| `DOWNLOAD_TIMEOUT_SECONDS`  | Per-attempt spotDL timeout              | `900`       |
-| `UPLOAD_TIMEOUT_SECONDS`    | Telegram audio upload timeout           | `180`       |
-| `UPLOAD_RETRIES`            | Transient Telegram upload attempts      | `3`         |
-| `MAX_CONCURRENT_DOWNLOADS`  | Global concurrent download limit        | `3`         |
-| `AUDIO_PROVIDERS`           | spotDL provider fallback order          | `soundcloud,youtube-music,youtube` |
-| `COOKIE_FILE`               | Optional Netscape cookies file for yt-dlp | —         |
-| `PROXY_URL`                 | Optional HTTP(S) proxy for audio providers | —        |
-| `YTDLP_EXTRA_ARGS`          | Optional raw yt-dlp arguments passed by spotDL | —    |
+| `DOWNLOAD_TIMEOUT_SECONDS`  | Authorized audio mode only: spotDL timeout | `900`       |
+| `UPLOAD_TIMEOUT_SECONDS`    | Authorized audio mode only: Telegram upload timeout | `180`       |
+| `UPLOAD_RETRIES`            | Authorized audio mode only: transient upload attempts | `3`         |
+| `MAX_CONCURRENT_DOWNLOADS`  | Authorized audio mode only: concurrent worker limit | `3`         |
+| `AUDIO_PROVIDERS`           | Authorized audio mode only: approved provider fallback order | `soundcloud,youtube-music,youtube` |
+| `COOKIE_FILE`               | Authorized audio mode only: provider cookie file | —         |
+| `PROXY_URL`                 | Authorized audio mode only: provider proxy | —        |
+| `YTDLP_EXTRA_ARGS`          | Authorized audio mode only: extra yt-dlp arguments | —    |
 
 ## 🚀 Production Deployment
 
@@ -292,9 +295,11 @@ pytest -q
 
 MIT — see [LICENSE](LICENSE).
 
-## ⚠️ Disclaimer
+## ⚖️ Compliance
 
-This bot is for educational use only. You are responsible for complying with Spotify’s Terms of Service and copyright laws. The authors assume no liability for misuse.
+Audio-file delivery is **disabled by default**. The default product displays limited Spotify metadata and links directly to Spotify. The former third-party audio-matching workflow is not an approved use merely because a user supplies a Spotify URL.
+
+See [docs/COMPLIANCE.md](docs/COMPLIANCE.md) before operating or changing this behavior. Setting `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` is an operator attestation only; it does not grant Spotify, provider, or copyright permissions. Do not enable it without the written platform permissions and rights-holder licences described in that document.
 
 ## 📬 Contact & Support
 

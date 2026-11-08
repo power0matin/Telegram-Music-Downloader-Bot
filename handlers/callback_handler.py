@@ -45,8 +45,13 @@ def register_callback_handlers(bot: TeleBot):
         chat_id = call.message.chat.id
         message_id = call.message.message_id
 
-        # Get user's language
+        # Existing quality buttons must not bypass the default metadata-only mode.
         messages = get_messages(user_id)
+        if not config.enable_authorized_audio_delivery:
+            bot.answer_callback_query(
+                call.id, messages.get("audio_delivery_disabled")
+            )
+            return
 
         try:
             # Parse callback data
@@ -130,7 +135,10 @@ def register_callback_handlers(bot: TeleBot):
 
             # Spotify metadata is untrusted text. Render it as escaped HTML so
             # titles containing Markdown metacharacters cannot break the reply.
-            metadata_text = format_metadata_html(metadata)
+            metadata_text = format_metadata_html(
+                metadata,
+                link_label=messages.get("open_on_spotify"),
+            )
             if metadata_text:
                 progress_text = (
                     f"{metadata_text}\n\n"
