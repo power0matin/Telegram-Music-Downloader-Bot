@@ -408,6 +408,83 @@ def test_pre_upload_size_skip_is_reported_separately_from_upload_failure(
     assert not request_dir.exists()
 
 
+def test_oversized_metadata_caption_is_truncated_and_audio_still_sends(
+    monkeypatch, tmp_path
+):
+    request_dir = tmp_path / "request"
+    request_dir.mkdir()
+    audio_path = request_dir / "Artist - Track.mp3"
+    audio_path.write_bytes(b"valid-audio")
+    title = "آ" * 300
+    artist = "🎵" * 400
+    album = "موسیقی" * 300
+    result = DownloadResult(
+        success=True,
+        files=[str(audio_path)],
+        metadata={
+            "valid": True,
+            "type": "track",
+            "title": title,
+            "artist": artist,
+            "album": album,
+        },
+        download_dir=str(request_dir),
+    )
+    monkeypatch.setattr(
+        SpotifyDownloader,
+        "check_dependencies",
+        lambda _self: {"spotdl": True, "ffmpeg": True},
+    )
+    monkeypatch.setattr(
+        SpotifyDownloader,
+        "download",
+        lambda _self, _url, _user_id, _quality: result,
+    )
+    bot = Mock()
+    bot.send_audio.return_value = object()
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=-100123456),
+        message_thread_id=None,
+    )
+
+    downloader_module.download_and_send(
+        bot, message, SPOTIFY_URL, quality=320, user_id=987654
+    )
+
+    assert bot.send_audio.call_count == 1
+    send_kwargs = bot.send_audio.call_args.kwargs
+    caption = send_kwargs["caption"]
+    assert downloader_module._telegram_utf16_length(caption) <= 1024
+    assert caption.startswith(f"🎵 {title}\n👤 ")
+    assert caption.endswith("…")
+    assert "parse_mode" not in send_kwargs
+    assert bot.send_message.call_count == 0
+    assert not request_dir.exists()
+
+
+def test_long_album_metadata_is_truncated_after_track_identity(tmp_path):
+    result = DownloadResult(
+        success=True,
+        metadata={
+            "valid": True,
+            "type": "track",
+            "title": "Track",
+            "artist": "Artist",
+            "album": "آلبوم" * 400,
+        },
+    )
+
+    caption = downloader_module._build_audio_caption(
+        downloader_module.get_messages(123),
+        result,
+        str(tmp_path / "track.mp3"),
+    )
+
+    assert caption.startswith("🎵 Track\n👤 Artist\n💿 ")
+    assert downloader_module._telegram_utf16_length(caption) <= 1024
+    assert caption.endswith("…")
+
+
 def test_group_download_uploads_to_origin_chat_and_retries_timeout(
     monkeypatch, tmp_path
 ):

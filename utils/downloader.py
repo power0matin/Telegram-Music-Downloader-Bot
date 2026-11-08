@@ -750,6 +750,34 @@ def _send_audio_with_retry(
     return AudioUploadStatus.FAILED
 
 
+TELEGRAM_CAPTION_MAX_UTF16_UNITS = 1024
+
+
+def _truncate_telegram_caption(text: str) -> str:
+    """Keep a plain-text caption within Telegram's conservative UTF-16 limit."""
+    if _telegram_utf16_length(text) <= TELEGRAM_CAPTION_MAX_UTF16_UNITS:
+        return text
+
+    suffix = "…"
+    available_units = TELEGRAM_CAPTION_MAX_UTF16_UNITS - 1
+    used_units = 0
+    characters = []
+
+    for character in text:
+        character_units = 2 if ord(character) > 0xFFFF else 1
+        if used_units + character_units > available_units:
+            break
+        characters.append(character)
+        used_units += character_units
+
+    return "".join(characters).rstrip() + suffix
+
+
+def _telegram_utf16_length(text: str) -> int:
+    """Count UTF-16 code units without splitting supplementary characters."""
+    return sum(2 if ord(character) > 0xFFFF else 1 for character in text)
+
+
 def _build_audio_caption(messages, result: DownloadResult, file_path: str) -> str:
     """Build a useful caption without applying list-level metadata to every track."""
     filename = os.path.basename(file_path)
@@ -761,8 +789,9 @@ def _build_audio_caption(messages, result: DownloadResult, file_path: str) -> st
             caption = f"🎵 {title}\n👤 {artist}"
             if metadata.get("album"):
                 caption += f"\n💿 {metadata['album']}"
-            return caption
-    return messages.get("download_complete", filename=filename)
+            return _truncate_telegram_caption(caption)
+    fallback_caption = messages.get("download_complete", filename=filename)
+    return _truncate_telegram_caption(fallback_caption)
 
 
 def download_and_send(
