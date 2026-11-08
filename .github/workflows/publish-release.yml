@@ -29,6 +29,8 @@ jobs:
       - name: Prepare version and bilingual release notes
         id: release
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -47,6 +49,7 @@ jobs:
 
           python - "$VERSION" "$RUNNER_TEMP/release-notes.md" <<'PY'
           from pathlib import Path
+          import os
           import re
           import sys
 
