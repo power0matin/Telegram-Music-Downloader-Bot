@@ -102,6 +102,127 @@ def test_download_requests_are_isolated_and_partial_files_are_kept(
     shutil.rmtree(second.download_dir)
 
 
+def test_success_exit_with_saved_item_error_is_reported_as_partial(
+    monkeypatch, tmp_path
+):
+    downloader = SpotifyDownloader(download_dir=str(tmp_path))
+    monkeypatch.setattr(
+        downloader,
+        "check_dependencies",
+        lambda: {"spotdl": True, "ffmpeg": True},
+    )
+    monkeypatch.setattr(
+        downloader_module,
+        "get_spotify_metadata",
+        lambda _url: {"valid": True, "type": "playlist"},
+    )
+
+    def create_partial_result(command):
+        output_template = command[command.index("--output") + 1]
+        request_dir = Path(output_template).parent
+        error_file = Path(command[command.index("--save-errors") + 1])
+        error_file.write_text(
+            "2026-11-08-12-00-00\\n"
+            "https://open.spotify.com/track/0000000000000000000000 - "
+            "LookupError: No results found for song\\n",
+            encoding="utf-8",
+        )
+        (request_dir / "Artist - Available.mp3").write_bytes(b"audio")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(downloader, "_execute_download", create_partial_result)
+
+    result = downloader.download(SPOTIFY_URL, user_id=42, quality=320)
+
+    assert result.success
+    assert len(result.files) == 1
+    assert result.source_failed_count == 1
+    assert result.skipped_file_count == 0
+    assert "1 source item(s) failed" in result.warning
+    shutil.rmtree(result.download_dir)
+
+
+def test_mixed_valid_and_oversized_outputs_are_reported_as_partial(
+    monkeypatch, tmp_path
+):
+    downloader = SpotifyDownloader(download_dir=str(tmp_path))
+    downloader.max_file_size = 4
+    monkeypatch.setattr(
+        downloader,
+        "check_dependencies",
+        lambda: {"spotdl": True, "ffmpeg": True},
+    )
+    monkeypatch.setattr(
+        downloader_module,
+        "get_spotify_metadata",
+        lambda _url: {"valid": True, "type": "playlist"},
+    )
+
+    def create_mixed_outputs(command):
+        output_template = command[command.index("--output") + 1]
+        request_dir = Path(output_template).parent
+        (request_dir / "Artist - Available.mp3").write_bytes(b"ok")
+        (request_dir / "Artist - Too Large.mp3").write_bytes(b"oversized")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(downloader, "_execute_download", create_mixed_outputs)
+
+    result = downloader.download(SPOTIFY_URL, user_id=42, quality=320)
+
+    assert result.success
+    assert len(result.files) == 1
+    assert result.skipped_file_count == 1
+    assert result.oversized_file_count == 1
+    assert "1 local audio file(s) skipped" in result.warning
+    shutil.rmtree(result.download_dir)
+
+
+def test_partial_source_and_skip_counts_are_reported_to_user(monkeypatch, tmp_path):
+    request_dir = tmp_path / "request"
+    request_dir.mkdir()
+    audio_path = request_dir / "Artist - Track.mp3"
+    audio_path.write_bytes(b"audio")
+    result = DownloadResult(
+        success=True,
+        files=[str(audio_path)],
+        warning="2 source item(s) failed; 1 local audio file(s) skipped",
+        source_failed_count=2,
+        skipped_file_count=1,
+        download_dir=str(request_dir),
+    )
+
+    monkeypatch.setattr(
+        SpotifyDownloader,
+        "check_dependencies",
+        lambda _self: {"spotdl": True, "ffmpeg": True},
+    )
+    monkeypatch.setattr(
+        SpotifyDownloader,
+        "download",
+        lambda _self, _url, _user_id, _quality: result,
+    )
+
+    bot = Mock()
+    bot.send_audio.return_value = object()
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=-100123456),
+        message_thread_id=None,
+    )
+
+    downloader_module.download_and_send(
+        bot,
+        message,
+        SPOTIFY_URL,
+        quality=320,
+        user_id=987654,
+    )
+
+    sent_messages = [call.args[1] for call in bot.send_message.call_args_list]
+    assert any("2 source item(s) failed" in text for text in sent_messages)
+    assert any("1 local audio file(s) skipped" in text for text in sent_messages)
+    assert not request_dir.exists()
+
+
 def test_oversized_audio_returns_delivery_specific_error(monkeypatch, tmp_path):
     downloader = SpotifyDownloader(download_dir=str(tmp_path))
     downloader.max_file_size = 3

@@ -108,8 +108,8 @@ class Messages:
             "downloading": "🎵 Downloading at {quality} kbps...\nPlease wait.",
             "download_complete": "🎵 Downloaded: {filename}",
             "partial_download": (
-                "⚠️ Partial result: {sent} file(s) sent, {failed} upload(s) failed. "
-                "Some source tracks may also have been unavailable."
+                "⚠️ Partial result: {sent} file(s) sent; {failed} Telegram upload(s) failed; "
+                "{source_failed} source item(s) failed; {skipped} local audio file(s) skipped."
             ),
             "retry_attempt": (
                 "⏳ Rate limit hit. Retrying in {} seconds... " "(Attempt {}/{})"
@@ -218,8 +218,9 @@ class Messages:
             ),
             "download_complete": "🎵 دانلود شد: {filename}",
             "partial_download": (
-                "⚠️ نتیجه ناقص بود: {sent} فایل ارسال شد و {failed} ارسال ناموفق بود. "
-                "ممکن است بعضی آهنگ‌های منبع نیز در دسترس نبوده باشند."
+                "⚠️ نتیجه ناقص بود: {sent} فایل ارسال شد؛ {failed} ارسال تلگرامی ناموفق بود؛ "
+                "{source_failed} مورد از منبع صوتی دریافت نشد؛ {skipped} فایل محلی خالی یا بزرگ‌تر "
+                "از محدودیت حجم کنار گذاشته شد."
             ),
             "retry_attempt": (
                 "⏳ به حد مجاز رسیده. تلاش مجدد در {} ثانیه... " "(تلاش {}/{})"
