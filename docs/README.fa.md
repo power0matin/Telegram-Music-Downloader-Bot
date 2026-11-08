@@ -71,6 +71,19 @@ py --version
 
 FFmpeg برای حالت پیش‌فرض پیش‌نمایش لازم نیست؛ فقط در مسیر اختیاری پردازش و ارسال صوتی کاربرد دارد.
 
+**Ubuntu 24.04:** ابزارهای لازم را با این دستورها نصب کن:
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv python3-pip
+```
+
+Python پیش‌فرض Ubuntu 22.04 قدیمی‌تر از نسخهٔ موردنیاز پروژه است؛ قبل از ادامه باید Python نسخهٔ ۳.۱۱ تا ۳.۱۴ را جداگانه نصب کنی.
+
+**Windows:** [Python](https://www.python.org/downloads/) و [Git](https://git-scm.com/downloads) را نصب کن. هنگام نصب Python گزینهٔ اضافه‌کردن آن به PATH را فعال کن.
+
+**macOS:** Python نسخهٔ ۳.۱۱ تا ۳.۱۴ را از [وب‌سایت رسمی Python](https://www.python.org/downloads/) نصب کن. اگر Git نصب نباشد، macOS هنگام اولین اجرای دستور `git` ممکن است نصب Xcode Command Line Tools را پیشنهاد دهد.
+
 ### ۳. دریافت سورس پروژه
 
 در Terminal یا PowerShell دستورهای زیر را اجرا کن:
