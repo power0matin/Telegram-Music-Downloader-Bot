@@ -247,6 +247,48 @@ def test_partial_source_and_skip_counts_are_reported_to_user(monkeypatch, tmp_pa
     assert not request_dir.exists()
 
 
+def test_failed_download_reports_source_and_skipped_counts(
+    monkeypatch, tmp_path
+):
+    result = DownloadResult(
+        success=False,
+        error="Audio provider error - all configured sources failed",
+        source_failed_count=3,
+        skipped_file_count=2,
+        oversized_file_count=1,
+    )
+    monkeypatch.setattr(
+        SpotifyDownloader,
+        "check_dependencies",
+        lambda _self: {"spotdl": True, "ffmpeg": True},
+    )
+    monkeypatch.setattr(
+        SpotifyDownloader,
+        "download",
+        lambda _self, _url, _user_id, _quality: result,
+    )
+
+    bot = Mock()
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=-100123456),
+        message_thread_id=None,
+    )
+
+    downloader_module.download_and_send(
+        bot,
+        message,
+        SPOTIFY_URL,
+        quality=320,
+        user_id=987654,
+    )
+
+    sent_messages = [call.args[1] for call in bot.send_message.call_args_list]
+    assert len(sent_messages) == 2
+    assert any("None of the configured audio sources" in text for text in sent_messages)
+    assert any("3 source item(s) failed" in text for text in sent_messages)
+    assert any("2 local audio file(s) skipped" in text for text in sent_messages)
+
+
 def test_oversized_audio_returns_delivery_specific_error(monkeypatch, tmp_path):
     downloader = SpotifyDownloader(download_dir=str(tmp_path))
     downloader.max_file_size = 3

@@ -812,6 +812,19 @@ def download_and_send(
                 error_message = messages.get("unexpected_error")
 
             _send_text(bot, chat_id, message, error_message)
+            if result.source_failed_count or result.skipped_file_count:
+                _send_text(
+                    bot,
+                    chat_id,
+                    message,
+                    messages.get(
+                        "partial_download",
+                        sent=0,
+                        failed=0,
+                        source_failed=result.source_failed_count,
+                        skipped=result.skipped_file_count,
+                    ),
+                )
             return
 
         files_sent = 0
