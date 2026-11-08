@@ -1,412 +1,319 @@
-# 🎵 ربات پیش‌نمایش لینک Spotify برای تلگرام
+# ربات پیش‌نمایش لینک Spotify برای تلگرام
 
-<div align="center">
+[![وضعیت CI](https://github.com/power0matin/Telegram-Music-Downloader-Bot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/power0matin/Telegram-Music-Downloader-Bot/actions/workflows/ci.yml)
+[![آخرین نسخه](https://img.shields.io/github/v/release/power0matin/Telegram-Music-Downloader-Bot)](https://github.com/power0matin/Telegram-Music-Downloader-Bot/releases/latest)
+[![Python](https://img.shields.io/badge/Python-3.11--3.14-blue)](https://www.python.org/)
+[![License](https://img.shields.io/github/license/power0matin/Telegram-Music-Downloader-Bot)](../LICENSE)
 
-![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge&logo=telegram)
-![Python](https://img.shields.io/badge/Python-3.11--3.14-blue?style=for-the-badge&logo=python)
-![Spotify](https://img.shields.io/badge/Spotify-Link%20Preview-green?style=for-the-badge&logo=spotify)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+این ربات لینک آهنگ، آلبوم یا پلی‌لیست Spotify را در تلگرام تشخیص می‌دهد، در صورت دسترس بودن اطلاعات محدودی مثل عنوان و نام سازنده را نمایش می‌دهد و لینک مستقیم همان محتوا در Spotify را در اختیار کاربر می‌گذارد.
 
-**ربات تلگرام برای نمایش پیش‌نمایش محدود اطلاعات Spotify و هدایت مستقیم کاربر به خود Spotify؛ ارسال فایل صوتی به‌صورت پیش‌فرض غیرفعال است.**
+**نکته مهم:** حالت پیش‌فرض ربات فقط پیش‌نمایش لینک است. در این حالت هیچ آهنگی دانلود یا به تلگرام ارسال نمی‌شود.
 
-[🇺🇸 English](../README.md) • [🚀 شروع سریع](#شروع-سریع) • [ نصب و راه‌اندازی 🛠️](#نصب-و-راه‌اندازی) • [📝 یادداشت‌های انتشار](../CHANGELOG.md)
+**زبان دیگر:** [English README](../README.md) · **راهنمای نصب کامل‌تر:** [آموزش نصب و راه‌اندازی](SETUP_INSTRUCTIONS.md) · [یادداشت‌های انتشار](../CHANGELOG.md)
 
+---
 
-**نسخهٔ فعلی:** `1.2.0`
+## ربات چه کاری انجام می‌دهد؟
 
-</div>
+- لینک آهنگ، آلبوم و پلی‌لیست Spotify را تشخیص می‌دهد.
+- ساختار لینک را بررسی و پارامترهای اضافی آن را پاک می‌کند.
+- از endpoint رسمی oEmbed اسپاتیفای، اطلاعات محدودی مثل عنوان و نام سازنده را دریافت می‌کند.
+- لینک مستقیم برای باز کردن محتوا در Spotify نمایش می‌دهد.
+- پیام‌های ربات را به فارسی و انگلیسی ارائه می‌کند.
+- برای جلوگیری از ارسال بیش‌ازحد پیام، محدودیت نرخ دارد.
 
-## ✨ ویژگی‌ها
+## در حالت پیش‌فرض چه کاری انجام نمی‌دهد؟
 
-- 🔗 **پشتیبانی از لینک‌ها**: آهنگ، آلبوم و پلی‌لیست Spotify
-- ℹ️ **پیش‌نمایش اطلاعات**: عنوان و نام سازنده از endpoint رسمی oEmbed اسپاتیفای
-- ↗️ **انتساب منبع**: لینک مستقیم برای باز کردن همان محتوا در Spotify
-- 🛡️ **اعتبارسنجی**: بررسی دقیق ساختار URL
-- ⚡ **پایداری**: محدودیت نرخ و مدیریت خطا
-- 🔒 **پیش‌فرض امن**: هیچ فایل صوتی از سرویس دیگر دریافت یا به تلگرام ارسال نمی‌شود
-- 🔧 **استقرار آسان**: راه‌اندازی تک‌اسکریپت با مدیریت خودکار وابستگی‌ها
-- 🌐 **پشتیبانی چندزبانه**: مستندات انگلیسی و فارسی
+- آهنگ دانلود نمی‌کند.
+- برای پیدا کردن نسخهٔ آهنگ به یوتیوب، ساندکلاد یا سرویس‌های دیگر مراجعه نمی‌کند.
+- فایل MP3 یا فایل صوتی برای کاربر ارسال نمی‌کند.
+- در صورت در دسترس نبودن oEmbed، صفحه‌های Spotify را برای استخراج اطلاعات اسکرپ نمی‌کند.
 
-<a name="شروع-سریع"></a>
+اگر Spotify اطلاعات پیش‌نمایش را برنگرداند، ربات همچنان می‌تواند لینک اصلی Spotify را نمایش دهد. دلیل غیرفعال بودن مسیر ارسال صوتی در [سند انطباق و حقوق محتوا](COMPLIANCE.md) توضیح داده شده است.
 
-## 🚀 شروع سریع
+---
 
-### پیش‌نیازها
+## راه‌اندازی سریع
 
-قبل از شروع، اطمینان حاصل کنید که دارید:
+برای اجرای ربات شخصی خودت، مراحل زیر را انجام بده. لازم نیست کدهای Python را تغییر بدهی.
 
-- **Python 3.11 تا 3.14** روی سیستم خود نصب شده
-- **توکن ربات تلگرام** (از [@BotFather](https://t.me/BotFather) دریافت کنید)
-- **Git** برای کلون کردن مخزن
-- **FFmpeg** فقط در صورت فعال‌سازی حالت مجاز ارسال فایل صوتی
-- اتصال اینترنت برای دانلود وابستگی‌ها
+### ۱. ساخت ربات تلگرام و دریافت توکن
 
-### 1. کلون کردن مخزن
+1. در تلگرام به [@BotFather](https://t.me/BotFather) پیام بده.
+2. دستور `/newbot` را ارسال کن.
+3. طبق راهنمای BotFather یک نام و یک نام کاربری برای ربات انتخاب کن.
+4. توکنی را که دریافت می‌کنی کپی کن و در اختیار دیگران قرار نده.
+
+در مرحلهٔ پنجم این توکن را در فایل تنظیمات پروژه قرار می‌دهیم.
+
+### ۲. نصب پیش‌نیازها
+
+موارد زیر لازم است:
+
+- Python نسخهٔ **۳.۱۱ تا ۳.۱۴**
+- Git
+- اتصال اینترنت
+- حساب تلگرام
+
+برای بررسی نسخهٔ Python:
+
+**Linux / macOS:**
+
+```bash
+python3 --version
+```
+
+**Windows:**
+
+```powershell
+py --version
+```
+
+FFmpeg برای حالت پیش‌فرض پیش‌نمایش لازم نیست؛ فقط در مسیر اختیاری پردازش و ارسال صوتی کاربرد دارد.
+
+**Ubuntu 24.04:** ابزارهای لازم را با این دستورها نصب کن:
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv python3-pip
+```
+
+Python پیش‌فرض Ubuntu 22.04 قدیمی‌تر از نسخهٔ موردنیاز پروژه است؛ قبل از ادامه باید Python نسخهٔ ۳.۱۱ تا ۳.۱۴ را جداگانه نصب کنی.
+
+**Windows:** [Python](https://www.python.org/downloads/) و [Git](https://git-scm.com/downloads) را نصب کن. هنگام نصب Python گزینهٔ اضافه‌کردن آن به PATH را فعال کن.
+
+**macOS:** Python نسخهٔ ۳.۱۱ تا ۳.۱۴ را از [وب‌سایت رسمی Python](https://www.python.org/downloads/) نصب کن. اگر Git نصب نباشد، macOS هنگام اولین اجرای دستور `git` ممکن است نصب Xcode Command Line Tools را پیشنهاد دهد.
+
+### ۳. دریافت سورس پروژه
+
+در Terminal یا PowerShell دستورهای زیر را اجرا کن:
 
 ```bash
 git clone https://github.com/power0matin/Telegram-Music-Downloader-Bot.git
 cd Telegram-Music-Downloader-Bot
 ```
 
-### 2. 🐍 ساخت و فعال‌سازی محیط مجازی (Virtual Environment)
+### ۴. ساخت محیط مجازی و نصب کتابخانه‌ها
 
-#### 🔹 Linux / macOS:
+محیط مجازی باعث می‌شود کتابخانه‌های این پروژه از بقیهٔ برنامه‌های Python سیستم جدا باشند.
+
+**Linux / macOS**
 
 ```bash
-# ساخت محیط مجازی
 python3 -m venv venv
-
-# فعال‌سازی محیط مجازی
 source venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-#### 🔹 Windows (CMD):
+**Windows PowerShell**
 
-```cmd
-:: ساخت محیط مجازی
-python -m venv venv
-
-:: فعال‌سازی محیط مجازی
-venv\Scripts\activate.bat
-```
-
-#### 🔹 Windows (PowerShell):
+ابتدا نسخه‌های نصب‌شدهٔ Python را ببین:
 
 ```powershell
-# ساخت محیط مجازی
-python -m venv venv
-
-# فعال‌سازی محیط مجازی
-venv\Scripts\Activate.ps1
+py -0p
 ```
 
-✅ بعد از فعال‌سازی، خط فرمان شما باید به شکل زیر تغییر کند:
+در مثال زیر، اگر Python نسخهٔ ۳.۱۲ را نصب نداری، شمارهٔ نسخه را با یکی از نسخه‌های نصب‌شده بین ۳.۱۱ تا ۳.۱۴ جایگزین کن:
 
-```bash
-(venv) user@machine:~/project-folder$
+```powershell
+py -3.12 -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-### 3. نصب وابستگی‌ها
+**Windows CMD**
 
-```bash
-pip install -r requirements.txt
+```cmd
+py -3.12 -m venv venv
+venv\Scripts\activate.bat
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-<details>
+بعد از فعال‌سازی محیط مجازی معمولاً عبارت `(venv)` در ابتدای خط فرمان دیده می‌شود. از این به بعد دستورهای نصب و اجرای پروژه را در همین محیط اجرا کن.
 
-  <summary>❗ نکته مهم درباره نصب پکیج‌ها و خطای "externally-managed-environment"</summary>
+### ۵. تنظیم توکن ربات
 
-گاهی هنگام نصب پکیج‌ها با pip در بعضی توزیع‌های لینوکس مثل Ubuntu 22.04+ ممکن است با خطای زیر مواجه شوید:
+در پوشهٔ اصلی پروژه یک فایل تنظیمات به نام `.env` بساز. برای این کار فایل نمونه را کپی کن:
 
-```
-error: externally-managed-environment
-```
-
-این به دلیل سیاست مدیریت بسته‌های سیستم توسط توزیع است که از نصب مستقیم pip روی محیط سیستمی جلوگیری می‌کند.
-
-#### راهکارهای پیشنهادی:
-
-1. مطمئن شوید که در **محیط مجازی فعال شده (venv)** هستید. دستور زیر مسیر python و pip را نشان می‌دهد:
-
-```bash
-which python
-which pip
-```
-
-این مسیرها باید داخل فولدر venv باشند.
-
-2. اگر در محیط مجازی هستید و همچنان این خطا را می‌بینید، برای نصب پکیج‌ها می‌توانید دستور زیر را با **احتیاط** و آگاهی استفاده کنید:
-
-```bash
-pip install --break-system-packages -r requirements.txt
-```
-
-⚠️ **هشدار:** استفاده از `--break-system-packages` ممکن است باعث تداخل یا خراب شدن بسته‌های سیستم شود. فقط در صورتی از آن استفاده کنید که مطمئن هستید و راه‌حل دیگری ندارید.
-
-3. اگر می‌خواهید بدون دردسر پکیج‌ها را مدیریت کنید، توصیه می‌شود از virtual environment استفاده کنید یا از ابزارهایی مثل `pipx` برای نصب برنامه‌های پایتون به صورت ایزوله بهره ببرید.
-</details>
-
-### 4. پیکربندی توکن ربات
-
-یکی از این روش‌ها را انتخاب کنید:
-
-**روش 1: متغیر محیطی**
-
-```bash
-export BOT_TOKEN="توکن_ربات_شما"
-```
-
-**روش 2: ایجاد فایل .env**
+**Linux / macOS**
 
 ```bash
 cp .env.example .env
-# سپس BOT_TOKEN را در .env جایگزین کنید
 ```
 
-### 5. راه‌اندازی ربات
+**Windows PowerShell**
 
-**استفاده از اسکریپت راه‌اندازی (توصیه می‌شود):**
-
-```bash
-chmod +x start_bot.sh
-./start_bot.sh
+```powershell
+Copy-Item .env.example .env
 ```
 
-**یا به صورت دستی:**
-
-```bash
-python3 bot.py
-```
-
-<a name="نصب-و-راه‌اندازی"></a>
-
-## 🛠️ نصب و راه‌اندازی
-
-### دریافت توکن ربات
-
-1. تلگرام را باز کنید و [@BotFather](https://t.me/BotFather) را جستجو کنید
-2. دستور `/newbot` را ارسال کنید و دستورالعمل‌ها را دنبال کنید
-3. نام و نام کاربری برای ربات خود انتخاب کنید
-4. توکن ربات را کپی کنید (فرمت: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
-
-### وابستگی‌های سیستم
-
-در نصب دستی، FFmpeg باید قبل از اجرای ربات نصب شده باشد:
-
-**Ubuntu/Debian:**
-
-```bash
-sudo apt update && sudo apt install ffmpeg
-```
-
-**macOS:**
-
-```bash
-brew install ffmpeg
-```
-
-**Windows:**
-از [وبسایت FFmpeg](https://ffmpeg.org/download.html) دانلود کنید یا از مدیران بسته مثل Chocolatey استفاده کنید.
-
-### گزینه‌های پیکربندی
-
-پیکربندی را در فایل `.env` انجام دهید و فایل `config.py` را بازنویسی نکنید:
-
-متغیر قدیمی `MAX_DOWNLOAD_SIZE_MB` برای سازگاری با فایل‌های تنظیمات قبلی همچنان با واحد دودویی MiB (هر واحد برابر ۱۰۲۴×۱۰۲۴ بایت) تفسیر می‌شود. با این حال، سقف مؤثر ارسال صوتی برای حاشیهٔ اطمینان روی ۴۹٬۰۰۰٬۰۰۰ بایت (۴۹ مگابایت ده‌دهی) محدود شده است. مقدار پیش‌فرض ۵۰ تغییر نکرده و فایل‌های `.env` موجود نیاز به مهاجرت ندارند.
+فایل `.env` را با Notepad، VS Code یا هر ویرایشگر متنی باز کن و مقدارهای اصلی را تنظیم کن:
 
 ```dotenv
-BOT_TOKEN=توکن_ربات_شما
+BOT_TOKEN=توکن_واقعی_دریافت_شده_از_BotFather
 DEFAULT_LANGUAGE=fa
 ENABLE_AUTHORIZED_AUDIO_DELIVERY=false
 ```
 
-حالت پیش‌فرض فقط پیش‌نمایش اطلاعات و لینک مستقیم Spotify است؛ هیچ فایل صوتی دانلود یا ارسال نمی‌شود. برای توضیح شرایط حقوقی و فنی حالت صوتی اختیاری، [سند انطباق پروژه](COMPLIANCE.md) را ببینید.
+- مقدار `BOT_TOKEN` را با توکن واقعی خودت جایگزین کن.
+- برای زبان فارسی مقدار `fa` و برای انگلیسی مقدار `en` را قرار بده.
+- مقدار `ENABLE_AUTHORIZED_AUDIO_DELIVERY` را روی `false` نگه دار.
 
-## 📱 نحوه استفاده
+فایل `.env` شامل اطلاعات محرمانه است و نباید آن را برای کسی بفرستی یا در GitHub منتشر کنی. این فایل در `.gitignore` قرار دارد و به‌صورت عادی وارد commit نمی‌شود.
 
-### استفاده پایه
+### ۶. اجرای ربات
 
-1. **شروع ربات**: دستور `/start` را به ربات ارسال کنید
-2. **ارسال لینک Spotify**: لینک عمومی آهنگ، آلبوم یا پلی‌لیست را ارسال کنید
-3. **مشاهده پیش‌نمایش**: اطلاعات محدود و لینک مستقیم Spotify نمایش داده می‌شود
-4. **باز کردن محتوا**: برای پخش، خود لینک Spotify را باز کنید
-
-### انواع URL پشتیبانی‌شده
-
-- **🎵 ترک‌ها**: `https://open.spotify.com/track/...`
-- **💿 آلبوم‌ها**: `https://open.spotify.com/album/...`
-- **📜 پلی‌لیست‌ها**: `https://open.spotify.com/playlist/...`
-
-### نمونه گردش کار
-
-```
-کاربر: https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh
-ربات: پیش‌نمایش اطلاعات در دسترس
-     🔗 باز کردن در Spotify
-```
-
-ارسال فایل صوتی به‌صورت پیش‌فرض غیرفعال است. فعال‌سازی حالت صوتی فقط پس از دریافت مجوزهای کتبی لازم از پلتفرم‌ها و مجوزهای صاحبان حقوق فایل مجاز است. جزئیات در [سیاست انطباق پروژه](COMPLIANCE.md).
-
-## 🏗️ ساختار پروژه
-
-```
-Telegram-Music-Downloader-Bot/
-├── 🤖 bot.py                      # Main bot entry point
-├── ⚙️ config.py                  # Environment-backed configuration
-├── 📋 requirements.txt            # Python dependencies
-├── 📋 requirements-dev.txt        # Test dependencies
-├── 🚀 start_bot.sh               # Startup script
-├── 📁 handlers/                  # Bot message handlers
-│   ├── __init__.py
-│   ├── command_handler.py         # /start and /help
-│   ├── spotify_handler.py         # Spotify URL processing
-│   └── callback_handler.py        # Button interactions
-├── 🛠️ utils/                     # Utility modules
-│   ├── __init__.py
-│   ├── downloader.py              # Download logic
-│   ├── spotify_utils.py           # URL validation and metadata
-│   ├── queue_functions.py         # Queue management
-│   ├── rate_limiter.py            # Abuse protection
-│   └── i18n.py                    # English/Persian messages
-├── 📂 scripts/                   # Maintenance shell scripts
-│   ├── cleanup_processes.sh       # Kills stray download processes
-│   └── restart_bot.sh             # Restarts the bot
-├── 📂 systemd/                   # Systemd service definitions
-│   └── spotify-bot.service        # Service unit file
-├── 📂 .github/workflows/         # GitHub Actions workflows
-│   └── ci.yml                     # Compile/test/script validation
-├── 📂 queue/                     # Queue storage (auto-created)
-├── ⬇️ downloads/                 # Temporary downloads (auto-created)
-├── 📚 Documentation files        # Project documentation
-│   ├── README.md                  # English documentation
-│   ├── README.fa.md               # Persian documentation
-│   └── SETUP_INSTRUCTIONS.md      # Installation & setup guide
-├── 🧾 .gitignore                 # Git ignored files
-├── 🪪 LICENSE                    # Project license
-```
-
-## 🔧 عیب‌یابی
-
-### مشکلات رایج
-
-**1. "BOT_TOKEN تنظیم نشده"**
+در حالی که محیط مجازی فعال است، دستور زیر را اجرا کن:
 
 ```bash
-# راه‌حل: توکن ربات خود را تنظیم کنید
-export BOT_TOKEN="توکن_شما"
+python bot.py
 ```
 
-**2. "FFmpeg پیدا نشد"**
+اگر توکن معتبر باشد، ربات به تلگرام متصل می‌شود. پنجرهٔ ترمینال را تا زمانی که می‌خواهی ربات فعال باشد باز نگه دار. برای متوقف کردن آن `Ctrl+C` را بزن.
+
+در Linux و macOS می‌توانی از اسکریپت کمکی هم استفاده کنی:
 
 ```bash
-# راه‌حل: FFmpeg را نصب کنید
-sudo apt install ffmpeg  # Ubuntu/Debian
-brew install ffmpeg      # macOS
-```
-
-**3. خطاهای "ماژول پیدا نشد"**
-
-```bash
-# راه‌حل: محیط مجازی را فعال کرده و مجدداً نصب کنید
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-**4. خطای مسیر صوتی (فقط در حالت ارسال صوتیِ مجاز)**
-
-این قابلیت به‌صورت پیش‌فرض غیرفعال است. پیش از عیب‌یابی آن، مطمئن شوید اپراتور مجوزهای کتبی لازم و مجوزهای صاحبان حقوق فایل را دریافت کرده و مقدار `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` را آگاهانه تنظیم کرده است.
-
-**5. خطاهای دسترسی**
-
-```bash
-# راه‌حل: اسکریپت‌ها را قابل اجرا کنید
 chmod +x start_bot.sh
-```
-
-### حالت اشکال‌زدایی
-
-اجرا با لاگ دقیق:
-
-```bash
-LOG_LEVEL=DEBUG python3 bot.py
-```
-
-### دریافت کمک
-
-- 📖 [دستورالعمل‌های راه‌اندازی](../SETUP_INSTRUCTIONS.md) را بررسی کنید
-- 🐛 باگ‌ها را در [Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues) گزارش دهید
-- 💡 ویژگی‌های جدید را از طریق [Discussions](https://github.com/power0matin/Telegram-Music-Downloader-Bot/discussions) درخواست کنید
-
-## 🔒 امنیت و حریم خصوصی
-
-- ✅ **داده حداقلی**: فایل‌های صوتی پس از ارسال حذف می‌شوند؛ لینک/شناسه چتِ صف حداکثر ۲۴ ساعت برای نگهداری عملیاتی باقی می‌ماند
-- ✅ **مدیریت امن توکن**: توکن‌های ربات به صورت امن از طریق متغیرهای محیطی ذخیره می‌شوند
-- ✅ **پاکسازی خودکار**: فایل‌های موقت پس از ارسال خودکار حذف می‌شوند
-- ✅ **محدودیت نرخ**: حفاظت داخلی در برابر هرزنامه و سوءاستفاده
-
-## 🚀 گزینه‌های استقرار
-
-### توسعه محلی
-
-```bash
 ./start_bot.sh
 ```
 
-### استقرار تولید
+این اسکریپت انتظار دارد محیط مجازی در پوشه‌ای به نام `venv` ساخته شده باشد. در ویندوز از دستور `python bot.py` استفاده کن.
 
-**استفاده از نصب‌کنندهٔ پیشنهادی روی Ubuntu 24.04 (در Ubuntu 22.04 باید Python نسخه 3.11 تا 3.14 جداگانه نصب و با `PYTHON_BIN` انتخاب شود):**
+### ۷. آزمایش ربات در تلگرام
 
-```bash
-chmod +x setup_vps.sh
-sudo ./setup_vps.sh
+1. صفحهٔ رباتی را که با BotFather ساخته‌ای باز کن.
+2. دستور `/start` را بفرست.
+3. با دستور `/help` راهنمای داخل ربات را ببین.
+4. یک لینک عمومی آهنگ، آلبوم یا پلی‌لیست Spotify ارسال کن.
+
+نمونهٔ لینک:
+
+```
+https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh
 ```
 
-این مخزن در حال حاضر Dockerfile رسمی ندارد. برای اینکه FFmpeg، runtime موردنیاز
-spotDL و محدودیت‌های سرویس به‌درستی تنظیم شوند، در محیط production از
-`setup_vps.sh`/systemd استفاده کنید.
+ربات اطلاعاتی را که Spotify در اختیار می‌گذارد و لینک باز کردن محتوا در Spotify نمایش می‌دهد. برای گوش دادن، همان لینک را باز کن.
 
-## 🤝 مشارکت
+---
 
-از مشارکت‌ها استقبال می‌کنیم! این‌طور می‌توانید کمک کنید:
+## تنظیمات پروژه
 
-1. **🍴 Fork** کردن مخزن
-2. **🌟 ایجاد** شاخه ویژگی: `git checkout -b feature/amazing-feature`
-3. **💾 Commit** تغییرات: `git commit -m 'Add amazing feature'`
-4. **📤 Push** به شاخه: `git push origin feature/amazing-feature`
-5. **🔄 ایجاد** Pull Request
+برای دیدن تمام تنظیمات به فایل [نمونه تنظیمات `.env.example`](../.env.example) مراجعه کن. تنظیمات اصلی:
 
-### راه‌اندازی توسعه
+| متغیر | کاربرد | مقدار پیش‌فرض |
+|---|---|---|
+| `BOT_TOKEN` | توکن ربات؛ الزامی است | باید وارد شود |
+| `DEFAULT_LANGUAGE` | زبان پیام‌های ربات: `fa` یا `en` | در فایل نمونه `fa` |
+| `ENABLE_AUTHORIZED_AUDIO_DELIVERY` | فعال یا غیرفعال بودن مسیر اختیاری ارسال صوتی | `false` |
+| `RATE_LIMIT_REQUESTS` | تعداد پیام مجاز در بازهٔ محدودیت نرخ | `20` |
+| `RATE_LIMIT_WINDOW_SECONDS` | مدت بازهٔ محدودیت نرخ، بر حسب ثانیه | `60` |
+| `LOG_LEVEL` | سطح جزئیات گزارش‌ها | `INFO` |
+
+برنامه فایل `.env` را هنگام شروع می‌خواند. بعد از تغییر تنظیمات، ربات را متوقف و دوباره اجرا کن.
+
+### دربارهٔ ارسال فایل صوتی
+
+قابلیت قدیمی ارسال فایل صوتی به‌صورت پیش‌فرض غیرفعال است. صرفاً برای دانلود آهنگ از لینک Spotify این گزینه را فعال نکن. استفاده از آن نیازمند مجوزهای کتبی پلتفرم‌ها و مجوز صاحبان حقوق محتوا برای همان کاربرد مشخص است. تغییر مقدار این متغیر به `true` به‌تنهایی مجوز ایجاد نمی‌کند. قبل از هر تغییری [سند انطباق پروژه](COMPLIANCE.md) را بخوان.
+
+---
+
+## نصب روی سرور Ubuntu
+
+اگر می‌خواهی ربات پس از بستن SSH هم به کار خود ادامه دهد، از نصب‌کنندهٔ systemd پروژه استفاده کن:
+
+- سیستم‌عامل پیشنهادی: Ubuntu 24.04.
+- در Ubuntu 22.04 باید Python نسخهٔ ۳.۱۱ تا ۳.۱۴ را جداگانه نصب و با `PYTHON_BIN` معرفی کنی.
+- نصب‌کننده یک کاربر مستقل به نام `spotifybot` و سرویس `spotify-bot` می‌سازد.
+- در نصب اول توکن را از تو می‌پرسد و هنگام به‌روزرسانی، فایل تنظیمات موجود را حفظ می‌کند.
+
+قبل از اجرا، [راهنمای نصب و راه‌اندازی](SETUP_INSTRUCTIONS.md) را بخوان. نصب‌کننده علاوه بر نصب وابستگی‌ها، بسته‌های Ubuntu را نیز به‌روزرسانی می‌کند؛ بنابراین آن را روی سروری اجرا کن که برای دریافت این به‌روزرسانی‌ها آماده باشد.
+
+در حال حاضر Dockerfile یا Docker Compose رسمی برای این پروژه ارائه نشده است.
+
+---
+
+## رفع مشکلات رایج
+
+### خطای `BOT_TOKEN is required` یا نامعتبر بودن توکن
+
+- مطمئن شو فایل `.env` در کنار فایل `bot.py` قرار دارد.
+- نام متغیر دقیقاً `BOT_TOKEN` باشد.
+- کل توکن را از BotFather کپی کن و فاصلهٔ اضافی نداشته باشد.
+- اگر توکن را جایی منتشر کرده‌ای، آن را از طریق BotFather باطل کن و توکن جدید بگیر.
+
+### خطای `No module named 'telebot'` یا پیدا نشدن کتابخانه
+
+ابتدا محیط مجازی را فعال کن و سپس وابستگی‌ها را نصب کن:
 
 ```bash
-# کلون fork خود
-git clone https://github.com/yourusername/Telegram-Music-Downloader-Bot.git
-cd Telegram-Music-Downloader-Bot
-
-# ایجاد محیط توسعه
-python3 -m venv dev-env
-source dev-env/bin/activate
-pip install -r requirements-dev.txt
-
-# اجرای تست‌ها
-python3 -m pytest tests/
+python -m pip install -r requirements.txt
 ```
 
-## 📊 عملکرد
+### نسخهٔ Python پشتیبانی نمی‌شود
 
-- 🔄 **بازیابی خطا**: تکرار محدود برای خطاهای موقت دانلود و ارسال تلگرام
-- 🧵 **همزمانی کنترل‌شده**: تعداد دانلودهای همزمان با `MAX_CONCURRENT_DOWNLOADS` محدود می‌شود
-- 🧹 **پاکسازی فایل**: workspace هر درخواست پس از ارسال حذف می‌شود
+نسخه باید بین ۳.۱۱ تا ۳.۱۴ باشد. نسخهٔ فعال را بررسی کن:
 
-## 📋 نیازمندی‌ها
+```bash
+python --version
+```
 
-- **Python**: 3.11 تا 3.14
-- **FFmpeg**: برای پردازش صوتی
-- **SpotDL**: نسخه 4.6.0 سازگار با CLI ربات (در requirements شامل است)
-- **فضای ذخیره‌سازی**: حداقل 100 مگابایت فضای آزاد برای فایل‌های موقت
+اگر محیط مجازی را با نسخهٔ اشتباه ساخته‌ای، آن پوشه را حذف کن و با نسخهٔ درست دوباره بساز.
 
-## 📞 پشتیبانی
+### عنوان آهنگ یا نام سازنده نمایش داده نمی‌شود
 
-- 🆘 **مسائل**: [GitHub Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues)
-- 💬 **بحث‌ها**: [GitHub Discussions](https://github.com/power0matin/Telegram-Music-Downloader-Bot/discussions)
+دریافت اطلاعات از oEmbed به‌صورت best-effort انجام می‌شود؛ ممکن است Spotify برای بعضی لینک‌ها اطلاعات پیش‌نمایش برنگرداند. در این حالت لینک اصلی Spotify همچنان قابل نمایش است و ربات از scraping صفحهٔ HTML استفاده نمی‌کند.
 
-## ⚖️ انطباق و حقوق محتوا
+### پیام محدودیت تعداد درخواست دریافت می‌کنم
 
-حالت پیش‌فرض ربات فقط پیش‌نمایش محدود اطلاعات و لینک مستقیم Spotify را ارائه می‌کند؛ ارسال فایل صوتی غیرفعال است. متغیر `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` به‌تنهایی مجوز دریافت یا بازتوزیع فایل ایجاد نمی‌کند. پیش از فعال‌سازی، [سیاست انطباق پروژه](COMPLIANCE.md) را بخوانید.
+محدودیت داخلی ربات فعال شده است. طبق زمانی که در پاسخ ربات نمایش داده می‌شود صبر کن و سپس لینک بعدی را بفرست.
 
-## 📄 مجوز
+### چند نمونه از ربات هم‌زمان اجرا شده‌اند
 
-این پروژه تحت مجوز **MIT** منتشر شده است - فایل [LICENSE](../LICENSE) را برای جزئیات ببینید.
+برای هر توکن فقط یک فرایند polling باید فعال باشد. اگر خطای تداخل دریافت پیام از تلگرام دیدی، نمونه‌های تکراری ربات را متوقف کن.
 
-## 🙏 تشکرات
+---
 
-- **Spotify oEmbed**: برای ارائه پیش‌نمایش محدود و لینک به محتوای اصلی
-- **pyTelegramBotAPI**: برای فریمورک قوی ربات تلگرام
-- **مشارکت‌کنندگان**: تشکر از همه کسانی که در این پروژه مشارکت کرده‌اند
+## ساختار پروژه
 
-<div align="center">
+```text
+.
+├── bot.py
+├── config.py
+├── requirements.txt
+├── requirements-dev.txt
+├── .env.example
+├── start_bot.sh
+├── setup_vps.sh
+├── handlers/
+├── utils/
+├── scripts/
+├── systemd/
+├── tests/
+└── docs/
+    ├── README.fa.md
+    ├── SETUP_INSTRUCTIONS.md
+    └── COMPLIANCE.md
+```
 
-**⭐ اگر این مخزن مفید بود، ستاره بدهید!**
+## مشارکت در توسعه
 
-با ❤️ توسط جامعه متن‌باز ساخته شده
+برای نصب ابزار تست و اجرای تست‌ها:
 
-</div>
+```bash
+python -m pip install -r requirements-dev.txt
+pytest -q
+```
+
+CI پروژه علاوه بر تست‌ها، کامپایل فایل‌های Python و اعتبارسنجی اسکریپت‌های shell را روی نسخه‌های Python ۳.۱۱ تا ۳.۱۴ انجام می‌دهد.
+
+## پشتیبانی و مجوز
+
+- گزارش باگ: [GitHub Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues)
+- مجوز: [MIT](../LICENSE)
+- صفحهٔ پروژه: [matinshahabadi.ir](https://matinshahabadi.ir/projects/telegram-music-downloader-bot/)
+
+**نگه‌دارندهٔ پروژه:** [Matin Shahabadi](https://github.com/power0matin)
