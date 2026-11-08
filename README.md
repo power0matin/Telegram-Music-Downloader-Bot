@@ -48,7 +48,7 @@
 * **Error handling**: Robust recovery with helpful messages
 * **Logging**: Structured logging with rotation
 * **Config management**: Environment-driven settings
-* **Dependencies**: Verified FFmpeg + spotDL 4.5.x compatibility
+* **Dependencies**: Verified FFmpeg + spotDL 4.6.0 compatibility
 
 ### 🌐 UX
 

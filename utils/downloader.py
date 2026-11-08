@@ -163,7 +163,7 @@ class SpotifyDownloader:
             "{artists} - {title}.{output-ext}",
         )
 
-        # Build a spotDL 4.5.x command. Keep the query before --audio because
+        # Build a spotDL 4.6.0 command. Keep the query before --audio because
         # --audio accepts a variable number of provider values and would
         # otherwise consume a trailing URL.
         command = [

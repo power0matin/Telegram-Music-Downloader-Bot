@@ -129,7 +129,7 @@ spotdl --version || error "spotDL installation failed"
 # ---- Runtime directories ----
 mkdir -p downloads queue logs "$BOT_RUNTIME_DIR"
 
-# spotDL 4.5+ recommends a JavaScript runtime for yt-dlp. Install its local
+# spotDL 4.6.0 recommends a JavaScript runtime for yt-dlp. Install its local
 # Deno binary into the same HOME that the systemd service will use. This is a
 # best-effort optimization; SoundCloud and some YouTube downloads can still
 # work without it.
