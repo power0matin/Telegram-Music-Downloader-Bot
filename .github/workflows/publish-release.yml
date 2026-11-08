@@ -1,0 +1,105 @@
+name: Publish Release
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the exact commit that passed CI
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Prepare version and bilingual release notes
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::VERSION must contain a stable semver value (for example 1.2.0)."
+            exit 1
+          fi
+
+          TAG="v$VERSION"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release $TAG already exists; nothing to publish."
+            exit 0
+          fi
+
+          python - "$VERSION" "$RUNNER_TEMP/release-notes.md" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          version, output_path = sys.argv[1:]
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+
+          english_heading = rf"^## \[{re.escape(version)}\][^\n]*\n"
+          english = re.search(
+              english_heading + r".*?(?=^---\s*$|\Z)",
+              changelog,
+              flags=re.MULTILINE | re.DOTALL,
+          )
+          if english is None:
+              raise SystemExit(f"No changelog section found for {version}")
+
+          persian_version = version.translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
+          persian_heading = rf"^## نسخهٔ {re.escape(persian_version)}[^\n]*\n"
+          persian = re.search(
+              persian_heading + r".*\Z",
+              changelog,
+              flags=re.MULTILINE | re.DOTALL,
+          )
+          if persian is None:
+              raise SystemExit(f"No Persian changelog section found for {version}")
+
+          notes = (
+              english.group(0).strip()
+              + "\n\n---\n\n"
+              + persian.group(0).strip()
+              + "\n\n---\n\n"
+              + "**Full changelog:** [CHANGELOG.md](https://github.com/"
+              + Path(".").resolve().name
+              + "/CHANGELOG.md)\n"
+          )
+          Path(output_path).write_text(notes, encoding="utf-8")
+          PY
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+
+      - name: Create the Git tag and publish the GitHub Release
+        if: steps.release.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_TARGET: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$RELEASE_TARGET" \
+            --title "$RELEASE_TAG" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
+          echo "Published $RELEASE_TAG from $RELEASE_TARGET"
