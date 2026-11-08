@@ -19,6 +19,19 @@ For a local installation:
 
 You do not need FFmpeg for the default preview-only mode. FFmpeg is used only by the optional audio-processing path.
 
+On **Ubuntu 24.04**, install the basic local tools with:
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv python3-pip
+```
+
+Ubuntu 22.04 ships an older default Python. Install Python 3.11–3.14 separately before following the local setup steps.
+
+On **Windows**, install [Python](https://www.python.org/downloads/) and [Git](https://git-scm.com/downloads). During Python setup, enable the option that adds Python to PATH.
+
+On **macOS**, install Python 3.11–3.14 from [python.org](https://www.python.org/downloads/). Install Git using the Xcode Command Line Tools if it is not already available.
+
 For a VPS installation, use Ubuntu 24.04 where possible. Ubuntu 22.04 needs a separately installed compatible Python runtime; details are in the VPS section below.
 
 ## 2. Create a Telegram bot
