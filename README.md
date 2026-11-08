@@ -1,4 +1,4 @@
-<h1 align="center">🎵 Spotify Downloader Bot</h1>
+<h1 align="center">🎵 Spotify Link Preview Bot</h1>
 
 <!-- repo-badges:start -->
 <p align="center">
@@ -20,10 +20,10 @@
 
 ![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge\&logo=telegram)
 ![Python](https://img.shields.io/badge/Python-3.11--3.14-blue?style=for-the-badge\&logo=python)
-![Spotify](https://img.shields.io/badge/Spotify-Downloader-green?style=for-the-badge\&logo=spotify)
+![Spotify](https://img.shields.io/badge/Spotify-Link%20Preview-green?style=for-the-badge\&logo=spotify)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
-**A Telegram bot that matches Spotify metadata to downloadable audio and sends the result back to the requesting chat.**
+**A Telegram bot that previews limited Spotify metadata and links users back to Spotify. Audio-file delivery is disabled by default.**
 
 [🚀 Quick Start](#-quick-start) • [🛠️ Setup](#️-installation--setup) • [📖 Documentation](#-documentation)
 
@@ -33,14 +33,15 @@
 
 ### 🎵 Core
 
-* **Spotify content types**: Tracks, albums, playlists
-* **MP3 bitrate selection**: 128 kbps / 320 kbps
-* **Metadata extraction**: Artist, title, album
-* **Status updates**: Metadata preview and Spotify-link feedback
+* **Spotify content links**: Tracks, albums, playlists
+* **Metadata preview**: Limited title/creator details through Spotify's official oEmbed endpoint
+* **Spotify attribution**: Direct link to open the corresponding item on Spotify
 * **Smart validation**: Strict Spotify URL checks
+* **Safe default**: No third-party audio is downloaded or forwarded
 
-> **Audio quality note:** 320 kbps selects the MP3 output bitrate. It cannot
-> create source quality that the selected audio provider does not supply.
+> **Optional audio delivery:** The legacy audio-delivery path is disabled by default.
+> It must not be enabled without the documented platform permissions and rights-holder
+> licences. See [docs/COMPLIANCE.md](docs/COMPLIANCE.md).
 
 ### 🛡️ Production
 
@@ -48,7 +49,7 @@
 * **Error handling**: Robust recovery with helpful messages
 * **Logging**: Structured logging with rotation
 * **Config management**: Environment-driven settings
-* **Dependencies**: Verified FFmpeg + spotDL 4.6.0 compatibility
+* **Optional audio dependencies**: FFmpeg + spotDL 4.6.0 (used only when authorized audio delivery is enabled)
 
 ### 🌐 UX
 
@@ -294,9 +295,11 @@ pytest -q
 
 MIT — see [LICENSE](LICENSE).
 
-## ⚠️ Disclaimer
+## ⚖️ Compliance
 
-This bot is for educational use only. You are responsible for complying with Spotify’s Terms of Service and copyright laws. The authors assume no liability for misuse.
+Audio-file delivery is **disabled by default**. The default product displays limited Spotify metadata and links directly to Spotify. The former third-party audio-matching workflow is not an approved use merely because a user supplies a Spotify URL.
+
+See [docs/COMPLIANCE.md](docs/COMPLIANCE.md) before operating or changing this behavior. Setting `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` is an operator attestation only; it does not grant Spotify, provider, or copyright permissions. Do not enable it without the written platform permissions and rights-holder licences described in that document.
 
 ## 📬 Contact & Support
 
