@@ -317,6 +317,97 @@ def test_oversized_audio_returns_delivery_specific_error(monkeypatch, tmp_path):
     shutil.rmtree(result.download_dir)
 
 
+def test_audio_file_filter_uses_exact_byte_boundaries(tmp_path):
+    downloader = SpotifyDownloader(download_dir=str(tmp_path))
+    downloader.max_file_size = 5
+    (tmp_path / "below.mp3").write_bytes(b"1234")
+    (tmp_path / "at-limit.mp3").write_bytes(b"12345")
+    (tmp_path / "above.mp3").write_bytes(b"123456")
+
+    files, skipped_count, oversized_count = downloader._process_downloaded_files(
+        str(tmp_path)
+    )
+
+    assert {Path(item["path"]).name for item in files} == {
+        "below.mp3",
+        "at-limit.mp3",
+    }
+    assert skipped_count == 1
+    assert oversized_count == 1
+
+
+def test_pre_upload_check_uses_same_limit_and_skips_oversized_file(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(
+        downloader_module,
+        "_get_audio_upload_limit_bytes",
+        lambda: 5,
+    )
+    message = SimpleNamespace(message_thread_id=None)
+    bot = Mock()
+    accepted = tmp_path / "accepted.mp3"
+    oversized = tmp_path / "oversized.mp3"
+    accepted.write_bytes(b"12345")
+    oversized.write_bytes(b"123456")
+
+    accepted_status = downloader_module._send_audio_with_retry(
+        bot, 123, message, str(accepted), "caption"
+    )
+    oversized_status = downloader_module._send_audio_with_retry(
+        bot, 123, message, str(oversized), "caption"
+    )
+
+    assert accepted_status is downloader_module.AudioUploadStatus.SENT
+    assert oversized_status is downloader_module.AudioUploadStatus.SKIPPED_TOO_LARGE
+    assert bot.send_audio.call_count == 1
+
+
+def test_pre_upload_size_skip_is_reported_separately_from_upload_failure(
+    monkeypatch, tmp_path
+):
+    request_dir = tmp_path / "request"
+    request_dir.mkdir()
+    audio_path = request_dir / "Artist - Track.mp3"
+    audio_path.write_bytes(b"oversized")
+    result = DownloadResult(
+        success=True,
+        files=[str(audio_path)],
+        download_dir=str(request_dir),
+    )
+    monkeypatch.setattr(
+        SpotifyDownloader,
+        "check_dependencies",
+        lambda _self: {"spotdl": True, "ffmpeg": True},
+    )
+    monkeypatch.setattr(
+        SpotifyDownloader,
+        "download",
+        lambda _self, _url, _user_id, _quality: result,
+    )
+    monkeypatch.setattr(
+        downloader_module,
+        "_get_audio_upload_limit_bytes",
+        lambda: 4,
+    )
+    bot = Mock()
+    message = SimpleNamespace(
+        chat=SimpleNamespace(id=-100123456),
+        message_thread_id=None,
+    )
+
+    downloader_module.download_and_send(
+        bot, message, SPOTIFY_URL, quality=320, user_id=987654
+    )
+
+    sent_messages = [call.args[1] for call in bot.send_message.call_args_list]
+    assert len(sent_messages) == 1
+    assert "0 Telegram upload(s) failed" in sent_messages[0]
+    assert "1 local audio file(s) skipped" in sent_messages[0]
+    assert bot.send_audio.call_count == 0
+    assert not request_dir.exists()
+
+
 def test_group_download_uploads_to_origin_chat_and_retries_timeout(
     monkeypatch, tmp_path
 ):
