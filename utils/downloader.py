@@ -42,6 +42,9 @@ class DownloadResult:
     metadata: Optional[Dict[str, Any]] = None
     total_size: int = 0
     download_dir: Optional[str] = None
+    source_failed_count: int = 0
+    skipped_file_count: int = 0
+    oversized_file_count: int = 0
 
 
 class DownloadError(Exception):
@@ -182,6 +185,10 @@ class SpotifyDownloader:
             "180",
         ]
 
+        # spotDL 4.6.0 records per-item failures separately from its process exit
+        # code. Each request has an isolated workspace, so this file is request-local.
+        command += ["--save-errors", os.path.join(output_dir, ".spotdl-errors.txt")]
+
         # Fall back through the configured audio sources in order.
         if config.audio_providers:
             command += ["--audio", *config.audio_providers]
@@ -256,6 +263,18 @@ class SpotifyDownloader:
                     self._redact_command(command),
                 )
 
+                # spotDL appends to --save-errors. Clear the previous attempt so
+                # only errors from the final retry determine the request outcome.
+                try:
+                    error_index = command.index("--save-errors")
+                    os.remove(command[error_index + 1])
+                except FileNotFoundError:
+                    pass
+                except (ValueError, IndexError):
+                    pass
+                except OSError as exc:
+                    logger.warning("Could not reset spotDL error log: %s", exc)
+
                 result = subprocess.run(
                     command,
                     capture_output=True,
@@ -314,6 +333,25 @@ class SpotifyDownloader:
         raise DownloadError("Download failed after all retry attempts")
 
     @staticmethod
+    def _read_spotdl_errors(error_file: str) -> List[str]:
+        """Read spotDL's supported per-item error report."""
+        try:
+            with open(error_file, "r", encoding="utf-8") as report:
+                lines = [line.strip() for line in report if line.strip()]
+        except FileNotFoundError:
+            return []
+        except OSError as exc:
+            logger.warning("Could not read spotDL error report %s: %s", error_file, exc)
+            return []
+
+        # spotDL prefixes a non-empty report with a timestamp in this format.
+        if lines and re.fullmatch(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}", lines[0]):
+            lines = lines[1:]
+
+        # Retries can append identical per-item errors; report unique failed items.
+        return list(dict.fromkeys(lines))
+
+    @staticmethod
     def _classify_download_error(
         combined: str, stdout: str, stderr: str
     ) -> tuple[str, bool]:
@@ -354,17 +392,18 @@ class SpotifyDownloader:
         logger.error("Unhandled spotDL error: %s", detail)
         return f"Download failed: {detail}", False
 
-    def _process_downloaded_files(self, download_dir: str) -> List[Dict[str, Any]]:
+    def _process_downloaded_files(
+        self, download_dir: str
+    ) -> tuple[List[Dict[str, Any]], int, int]:
         """
-        Process downloaded files and extract information.
-
-        Args:
-            download_dir: Directory containing downloaded files
+        Process downloadable audio files and count rejected outputs.
 
         Returns:
-            List of file information dictionaries
+            Tuple of (valid files, total skipped files, oversized files).
         """
         files: List[Dict[str, Any]] = []
+        skipped_files = 0
+        oversized_files = 0
 
         # Telegram's sendAudio endpoint accepts MP3 and M4A uploads.
         allowed_exts = (".mp3", ".m4a")
@@ -374,7 +413,7 @@ class SpotifyDownloader:
                 logger.warning(
                     "Download directory does not exist or is not a directory: %s", download_dir
                 )
-                return []
+                return [], 0, 0
 
             # spotDL may create nested directories for lists, so walk recursively.
             for root, _, filenames in os.walk(download_dir):
@@ -388,17 +427,21 @@ class SpotifyDownloader:
                         file_stat = os.stat(file_path)
                     except OSError as e:
                         logger.warning("Skipping file %s: %s", file_path, e)
+                        skipped_files += 1
                         continue
 
                     # Ignore incomplete/empty output files.
                     if file_stat.st_size == 0:
                         logger.warning("Skipping zero-size file %s", filename)
+                        skipped_files += 1
                         continue
 
                     # Files larger than the configured Telegram delivery limit
                     # cannot be sent through the hosted Bot API.
                     if file_stat.st_size > self.max_file_size:
                         logger.warning("File %s exceeds size limit", filename)
+                        skipped_files += 1
+                        oversized_files += 1
                         continue
 
                     file_info = {
@@ -423,7 +466,7 @@ class SpotifyDownloader:
                     "No audio files found under %s. Top-level contents: %s", download_dir, top_level
                 )
 
-            return files
+            return files, skipped_files, oversized_files
 
         except Exception as e:
             logger.error("Error processing downloaded files: %s", e)
@@ -491,6 +534,9 @@ class SpotifyDownloader:
 
         execution_error: Optional[DownloadError] = None
         execution_result: Optional[subprocess.CompletedProcess] = None
+        source_errors: List[str] = []
+        skipped_file_count = 0
+        oversized_file_count = 0
         try:
             try:
                 execution_result = self._execute_download(command)
@@ -500,12 +546,29 @@ class SpotifyDownloader:
                 # the whole request.
                 execution_error = exc
 
-            files = self._process_downloaded_files(request_download_dir)
+            source_errors = self._read_spotdl_errors(
+                os.path.join(request_download_dir, ".spotdl-errors.txt")
+            )
+            files, skipped_file_count, oversized_file_count = (
+                self._process_downloaded_files(request_download_dir)
+            )
+
+            for source_error in source_errors:
+                logger.warning(
+                    "spotDL item failed for user %s: %s",
+                    user_id,
+                    self._redact_output(source_error[:500]),
+                )
 
             if not files:
-                if self._has_oversized_audio(request_download_dir):
+                if oversized_file_count:
                     raise DownloadError(
                         "Downloaded audio exceeds the configured Telegram upload size limit"
+                    )
+                if source_errors:
+                    raise DownloadError(
+                        "Audio provider error - all configured sources failed "
+                        f"({len(source_errors)} item-level error(s))"
                     )
                 if execution_error is not None:
                     raise execution_error
@@ -539,13 +602,24 @@ class SpotifyDownloader:
                     logger, user_id, file_info["filename"], file_info["size"]
                 )
 
+            warning_parts = []
+            if execution_error is not None:
+                warning_parts.append(str(execution_error))
+            if source_errors:
+                warning_parts.append(f"{len(source_errors)} source item(s) failed")
+            if skipped_file_count:
+                warning_parts.append(f"{skipped_file_count} local audio file(s) skipped")
+
             return DownloadResult(
                 success=True,
                 files=[f["path"] for f in files],
-                warning=str(execution_error) if execution_error else None,
+                warning="; ".join(warning_parts) or None,
                 metadata=metadata,
                 total_size=total_size,
                 download_dir=request_download_dir,
+                source_failed_count=len(source_errors),
+                skipped_file_count=skipped_file_count,
+                oversized_file_count=oversized_file_count,
             )
 
         except (DownloadError, DependencyError) as e:
@@ -555,6 +629,9 @@ class SpotifyDownloader:
                 error=str(e),
                 metadata=metadata,
                 download_dir=request_download_dir,
+                source_failed_count=len(source_errors),
+                skipped_file_count=skipped_file_count,
+                oversized_file_count=oversized_file_count,
             )
 
 
@@ -735,6 +812,19 @@ def download_and_send(
                 error_message = messages.get("unexpected_error")
 
             _send_text(bot, chat_id, message, error_message)
+            if result.source_failed_count or result.skipped_file_count:
+                _send_text(
+                    bot,
+                    chat_id,
+                    message,
+                    messages.get(
+                        "partial_download",
+                        sent=0,
+                        failed=0,
+                        source_failed=result.source_failed_count,
+                        skipped=result.skipped_file_count,
+                    ),
+                )
             return
 
         files_sent = 0
@@ -746,9 +836,29 @@ def download_and_send(
             else:
                 files_failed += 1
 
+        has_partial_result = bool(
+            files_failed
+            or result.warning
+            or result.source_failed_count
+            or result.skipped_file_count
+        )
         if files_sent == 0:
-            _send_text(bot, chat_id, message, messages.get("file_send_error"))
-        elif files_failed or result.warning:
+            if has_partial_result:
+                _send_text(
+                    bot,
+                    chat_id,
+                    message,
+                    messages.get(
+                        "partial_download",
+                        sent=files_sent,
+                        failed=files_failed,
+                        source_failed=result.source_failed_count,
+                        skipped=result.skipped_file_count,
+                    ),
+                )
+            else:
+                _send_text(bot, chat_id, message, messages.get("file_send_error"))
+        elif has_partial_result:
             _send_text(
                 bot,
                 chat_id,
@@ -757,6 +867,8 @@ def download_and_send(
                     "partial_download",
                     sent=files_sent,
                     failed=files_failed,
+                    source_failed=result.source_failed_count,
+                    skipped=result.skipped_file_count,
                 ),
             )
 
