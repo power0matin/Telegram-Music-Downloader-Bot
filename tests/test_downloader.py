@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+from importlib.metadata import version
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -13,7 +14,7 @@ from utils.downloader import DownloadError, DownloadResult, SpotifyDownloader
 SPOTIFY_URL = "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh"
 
 
-def test_spotdl_command_matches_45_cli(tmp_path):
+def test_spotdl_command_matches_46_cli(tmp_path):
     downloader = SpotifyDownloader(download_dir=str(tmp_path))
     command = downloader._prepare_download_command(
         SPOTIFY_URL, str(tmp_path), quality=320
@@ -22,6 +23,8 @@ def test_spotdl_command_matches_45_cli(tmp_path):
     assert command[:3] == ["spotdl", "download", SPOTIFY_URL]
     assert "--audio" in command
     assert "--audio-providers" not in command
+    audio_index = command.index("--audio")
+    assert command[audio_index + 1:audio_index + 4] == ["soundcloud", "youtube-music", "youtube"]
     assert command[command.index("--bitrate") + 1] == "320k"
     assert command[command.index("--format") + 1] == "mp3"
 
@@ -29,6 +32,7 @@ def test_spotdl_command_matches_45_cli(tmp_path):
 def test_installed_spotdl_exposes_expected_cli():
     spotdl = shutil.which("spotdl")
     assert spotdl is not None
+    assert version("spotdl") == "4.6.0"
 
     result = subprocess.run(
         [spotdl, "--help"],
@@ -39,8 +43,24 @@ def test_installed_spotdl_exposes_expected_cli():
     )
     output = result.stdout + result.stderr
     assert result.returncode == 0
-    assert "--audio" in output
-    assert "download" in output
+
+    for option in (
+        "download",
+        "--audio",
+        "--bitrate",
+        "--format",
+        "--output",
+        "--overwrite",
+        "--max-filename-length",
+        "--cookie-file",
+        "--proxy",
+        "--yt-dlp-args",
+    ):
+        assert option in output
+
+
+def test_spotdl_46_dependency_excludes_known_broken_ytmusicapi_releases():
+    assert version("ytmusicapi") not in {"1.12.2", "1.12.3"}
 
 
 def test_download_requests_are_isolated_and_partial_files_are_kept(
