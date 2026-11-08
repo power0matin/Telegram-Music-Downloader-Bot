@@ -5,7 +5,8 @@ set -euo pipefail
 # Telegram Spotify Downloader Bot - VPS Setup Script (Ubuntu)
 # ============================================================
 # This script installs all dependencies and runs the bot
-# on a fresh Ubuntu VPS (22.04/24.04).
+# on Ubuntu 24.04, or Ubuntu 22.04 with Python 3.11-3.14 installed.
+# Override the interpreter with: sudo PYTHON_BIN=python3.11 ./setup_vps.sh
 #
 # Usage:
 #   chmod +x setup_vps.sh
@@ -19,6 +20,7 @@ BOT_USER="spotifybot"
 BOT_DIR="/opt/Telegram-Music-Downloader-Bot"
 BOT_RUNTIME_DIR="${BOT_DIR}/runtime"
 REPO_URL="https://github.com/power0matin/Telegram-Music-Downloader-Bot.git"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 # Colors
 RED='\033[0;31m'
@@ -69,9 +71,17 @@ apt-get install -y -qq \
     curl
 
 # Verify installations
-python3 --version || error "Python3 installation failed"
-if ! python3 -c 'import sys; raise SystemExit(0 if (3, 10) <= sys.version_info[:2] < (3, 15) else 1)'; then
-    error "Python 3.10-3.14 is required by spotDL 4.5.x. Use Ubuntu 22.04 or 24.04."
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+    error "Python interpreter '$PYTHON_BIN' was not found. Set PYTHON_BIN to an installed Python 3.11-3.14 executable."
+fi
+"$PYTHON_BIN" --version || error "Selected Python interpreter could not be executed."
+if ! "$PYTHON_BIN" -c 'import sys; raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 15) else 1)'; then
+    error "Python 3.11-3.14 is required by spotDL 4.6.x. Ubuntu 24.04 provides Python 3.12; on Ubuntu 22.04 install Python 3.11-3.14 and rerun with PYTHON_BIN=python3.11."
+fi
+PYTHON_MINOR="$("$PYTHON_BIN" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+PYTHON_VENV_PACKAGE="python${PYTHON_MINOR}-venv"
+if apt-cache show "$PYTHON_VENV_PACKAGE" >/dev/null 2>&1; then
+    apt-get install -y -qq "$PYTHON_VENV_PACKAGE"
 fi
 ffmpeg -version >/dev/null 2>&1 || error "FFmpeg installation failed"
 git --version || error "Git installation failed"
@@ -99,8 +109,12 @@ fi
 
 # ---- Setup virtual environment ----
 info "Setting up Python virtual environment..."
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
+if [ -x "venv/bin/python" ] && ! venv/bin/python -c 'import sys; raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 15) else 1)'; then
+    warn "Existing virtual environment uses an unsupported Python version; recreating it."
+    rm -rf venv
+fi
+if [ ! -x "venv/bin/python" ]; then
+    "$PYTHON_BIN" -m venv venv
 fi
 
 source venv/bin/activate

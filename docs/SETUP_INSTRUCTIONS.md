@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- Python 3.10–3.14
+- Python 3.11–3.14 (required by spotDL 4.6.x)
 - FFmpeg
 - Telegram Bot Token
 
@@ -25,6 +25,16 @@ venv\Scripts\activate     # On Windows
 # Install dependencies
 pip install -r requirements.txt
 ```
+
+### Python runtime compatibility
+
+spotDL 4.6.x requires Python 3.11 or newer. The automated VPS installer works out of the box with Ubuntu 24.04 (Python 3.12). Ubuntu 22.04 ships Python 3.10; install Python 3.11–3.14 separately and select it explicitly when running the installer, for example:
+
+```bash
+sudo PYTHON_BIN=python3.11 ./setup_vps.sh
+```
+
+The installer validates the selected interpreter and recreates an existing virtual environment only when its Python version is unsupported.
 
 ### 2. Get Telegram Bot Token
 

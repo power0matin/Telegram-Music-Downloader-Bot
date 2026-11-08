@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge&logo=telegram)
-![Python](https://img.shields.io/badge/Python-3.10--3.14-blue?style=for-the-badge&logo=python)
+![Python](https://img.shields.io/badge/Python-3.11--3.14-blue?style=for-the-badge&logo=python)
 ![Spotify](https://img.shields.io/badge/Spotify-Downloader-green?style=for-the-badge&logo=spotify)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
@@ -32,7 +32,7 @@
 
 قبل از شروع، اطمینان حاصل کنید که دارید:
 
-- **Python 3.10 تا 3.14** روی سیستم خود نصب شده
+- **Python 3.11 تا 3.14** روی سیستم خود نصب شده
 - **توکن ربات تلگرام** (از [@BotFather](https://t.me/BotFather) دریافت کنید)
 - **Git** برای کلون کردن مخزن
 - **FFmpeg** برای پردازش فایل صوتی
@@ -332,7 +332,7 @@ LOG_LEVEL=DEBUG python3 bot.py
 
 ### استقرار تولید
 
-**استفاده از نصب‌کنندهٔ پیشنهادی روی Ubuntu 22.04/24.04:**
+**استفاده از نصب‌کنندهٔ پیشنهادی روی Ubuntu 24.04 (در Ubuntu 22.04 باید Python نسخه 3.11 تا 3.14 جداگانه نصب و با `PYTHON_BIN` انتخاب شود):**
 
 ```bash
 chmod +x setup_vps.sh
@@ -377,7 +377,7 @@ python3 -m pytest tests/
 
 ## 📋 نیازمندی‌ها
 
-- **Python**: 3.10 تا 3.14
+- **Python**: 3.11 تا 3.14
 - **FFmpeg**: برای پردازش صوتی
 - **SpotDL**: نسخه 4.5.x سازگار با CLI ربات (در requirements شامل است)
 - **فضای ذخیره‌سازی**: حداقل 100 مگابایت فضای آزاد برای فایل‌های موقت

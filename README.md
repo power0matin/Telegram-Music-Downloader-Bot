@@ -19,7 +19,7 @@
 <div align="center">
 
 ![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge\&logo=telegram)
-![Python](https://img.shields.io/badge/Python-3.10--3.14-blue?style=for-the-badge\&logo=python)
+![Python](https://img.shields.io/badge/Python-3.11--3.14-blue?style=for-the-badge\&logo=python)
 ![Spotify](https://img.shields.io/badge/Spotify-Downloader-green?style=for-the-badge\&logo=spotify)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
@@ -68,11 +68,11 @@
 
 ### Prerequisites
 
-* **Python 3.10–3.14** (required by spotDL 4.5.x)
+* **Python 3.11–3.14** (required by spotDL 4.6.x)
 * **Telegram Bot Token** (from [@BotFather](https://t.me/BotFather))
 * **Git**
 * **FFmpeg**
-* **Ubuntu 22.04/24.04** for the automated VPS installer
+* **Ubuntu 24.04** for the automated VPS installer; Ubuntu 22.04 requires a separately installed Python 3.11–3.14 runtime
 
 ### 1) Clone & Setup
 
@@ -133,7 +133,7 @@ python bot.py
 
 ### Systemd (Recommended)
 
-On Ubuntu 22.04/24.04, the installer creates the dedicated service user,
+On Ubuntu 24.04, the installer uses the system Python 3.12 and creates the dedicated service user. Ubuntu 22.04 is also supported when a compatible Python 3.11–3.14 runtime is installed and selected through `PYTHON_BIN`,
 runtime directories, Deno fallback runtime, environment file, and hardened
 systemd unit:
 
