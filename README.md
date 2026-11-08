@@ -188,7 +188,7 @@ For a complete list of settings, see [`.env.example`](.env.example). The most us
 | Setting | What it does | Default |
 | --- | --- | --- |
 | `BOT_TOKEN` | Telegram token from BotFather. Required. | — |
-| `DEFAULT_LANGUAGE` | Bot message language: `en` or `fa`. | `en` |
+| `DEFAULT_LANGUAGE` | Bot message language: `en` or `fa`. | `en` fallback; sample file uses `fa` |
 | `ENABLE_AUTHORIZED_AUDIO_DELIVERY` | Controls the optional audio-delivery path. Keep disabled for normal use. | `false` |
 | `RATE_LIMIT_REQUESTS` | Number of messages allowed in the rate-limit window. | `20` |
 | `RATE_LIMIT_WINDOW_SECONDS` | Length of the rate-limit window in seconds. | `60` |
@@ -297,7 +297,6 @@ The CI workflow also compiles the Python sources and checks the shell scripts on
 ## Support and license
 
 - Report a bug: [GitHub Issues](https://github.com/power0matin/Telegram-Music-Downloader-Bot/issues)
-- Request or discuss an improvement: [GitHub Discussions](https://github.com/power0matin/Telegram-Music-Downloader-Bot/discussions)
 - License: [MIT](LICENSE)
 - Project page: [matinshahabadi.ir](https://matinshahabadi.ir/projects/telegram-music-downloader-bot/)
 
