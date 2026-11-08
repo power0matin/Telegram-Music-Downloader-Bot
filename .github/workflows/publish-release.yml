@@ -81,7 +81,7 @@ jobs:
               + persian.group(0).strip()
               + "\n\n---\n\n"
               + "**Full changelog:** [CHANGELOG.md](https://github.com/"
-              + Path(".").resolve().name
+              + os.environ["GITHUB_REPOSITORY"]
               + "/CHANGELOG.md)\n"
           )
           Path(output_path).write_text(notes, encoding="utf-8")
