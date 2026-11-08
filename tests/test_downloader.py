@@ -24,7 +24,14 @@ def test_spotdl_command_matches_46_cli(tmp_path):
     assert "--audio" in command
     assert "--audio-providers" not in command
     audio_index = command.index("--audio")
-    assert command[audio_index + 1:audio_index + 4] == ["soundcloud", "youtube-music", "youtube"]
+    assert command[audio_index + 1:audio_index + 4] == [
+        "soundcloud",
+        "youtube-music",
+        "youtube",
+    ]
+    assert command[command.index("--save-errors") + 1] == str(
+        tmp_path / ".spotdl-errors.txt"
+    )
     assert command[command.index("--bitrate") + 1] == "320k"
     assert command[command.index("--format") + 1] == "mp3"
 
@@ -55,12 +62,29 @@ def test_installed_spotdl_exposes_expected_cli():
         "--cookie-file",
         "--proxy",
         "--yt-dlp-args",
+        "--save-errors",
     ):
         assert option in output
 
 
 def test_spotdl_46_dependency_excludes_known_broken_ytmusicapi_releases():
     assert version("ytmusicapi") not in {"1.12.2", "1.12.3"}
+
+
+def test_spotdl_error_report_ignores_timestamp_and_deduplicates(tmp_path):
+    error_file = tmp_path / ".spotdl-errors.txt"
+    error_file.write_text(
+        "2026-11-08-12-00-00\n"
+        "track-a - LookupError: not found\n"
+        "track-a - LookupError: not found\n"
+        "track-b - AudioProviderError: unavailable\n",
+        encoding="utf-8",
+    )
+
+    assert downloader_module.SpotifyDownloader._read_spotdl_errors(str(error_file)) == [
+        "track-a - LookupError: not found",
+        "track-b - AudioProviderError: unavailable",
+    ]
 
 
 def test_download_requests_are_isolated_and_partial_files_are_kept(
