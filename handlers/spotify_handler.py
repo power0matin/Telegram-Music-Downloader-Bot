@@ -9,9 +9,13 @@ from __future__ import annotations
 
 import hashlib
 import html
+import json
 import math
 import re
+import sqlite3
 import time
+from contextlib import closing
+from pathlib import Path
 from threading import RLock
 from typing import Dict, Optional
 
@@ -35,115 +39,205 @@ logger = setup_logging(__name__)
 
 class LinkStore:
     """
-    In-memory link storage with expiration and basic cleanup.
+    SQLite-backed link storage with expiry and atomic one-time consumption.
 
-    Stores:
-        - canonical Spotify URL
-        - user id
-        - optional metadata snapshot
+    The database lives beside the configured queue file by default, so pending
+    callback data survives bot restarts while remaining local to one deployment.
     """
 
-    def __init__(self, expiry_seconds: int = 3600) -> None:
+    def __init__(
+        self,
+        expiry_seconds: int = 3600,
+        db_path: Optional[str | Path] = None,
+    ) -> None:
         """
-        Initialize link store.
+        Initialize the persistent link store.
 
         Args:
-            expiry_seconds: Link expiry time in seconds (default: 1 hour)
+            expiry_seconds: Link expiry time in seconds (default: 1 hour).
+            db_path: Optional SQLite path, primarily useful for isolated tests.
         """
-        self.store: Dict[str, Dict] = {}
         self.expiry_seconds = expiry_seconds
+        default_db_path = config.queue_path.parent / "pending_links.sqlite3"
+        self.db_path = str(Path(db_path or default_db_path).expanduser())
         self._lock = RLock()
+        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+        self._initialize_database()
+
+    def _connect(self) -> sqlite3.Connection:
+        """Open a short-lived connection with a bounded lock wait."""
+        connection = sqlite3.connect(
+            self.db_path, timeout=30, isolation_level=None
+        )
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA busy_timeout = 30000")
+        return connection
+
+    def _initialize_database(self) -> None:
+        """Create the pending-link table and expiry index if needed."""
+        with closing(self._connect()) as connection:
+            connection.execute("PRAGMA journal_mode = WAL")
+            connection.execute("PRAGMA synchronous = NORMAL")
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS pending_links (
+                    link_id TEXT PRIMARY KEY,
+                    link TEXT NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    metadata_json TEXT NOT NULL,
+                    created_at REAL NOT NULL,
+                    expires_at REAL NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_pending_links_expires_at
+                ON pending_links (expires_at)
+                """
+            )
+
+        try:
+            Path(self.db_path).chmod(0o600)
+        except OSError:
+            logger.warning("Could not restrict permissions on pending-link database")
+
+        self.cleanup_expired()
 
     def generate_link_id(self, link: str, user_id: int) -> str:
-        """
-        Generate a unique ID for the link.
-
-        Args:
-            link: Spotify URL
-            user_id: User ID for additional uniqueness
-
-        Returns:
-            Unique link ID
-        """
+        """Generate a unique ID for a pending callback."""
         data = f"{link}:{user_id}:{time.time_ns()}"
         return hashlib.sha256(data.encode("utf-8")).hexdigest()[:12]
 
     def store_link(
         self, link_id: str, link: str, user_id: int, metadata: Optional[Dict] = None
     ) -> None:
-        """
-        Store link with metadata and expiry.
+        """Persist a link, owner, metadata snapshot, and absolute expiry time."""
+        now = time.time()
+        expires_at = now + self.expiry_seconds
+        metadata_json = json.dumps(
+            metadata or {}, ensure_ascii=False, separators=(",", ":")
+        )
 
-        Args:
-            link_id: Unique link identifier
-            link: Canonical Spotify URL
-            user_id: User ID
-            metadata: Optional metadata snapshot
-        """
-        with self._lock:
-            self.store[link_id] = {
-                "link": link,
-                "user_id": user_id,
-                "metadata": metadata or {},
-                "created_at": time.time(),
-            }
-            self._cleanup_expired_locked()
+        with self._lock, closing(self._connect()) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            try:
+                connection.execute(
+                    "DELETE FROM pending_links WHERE expires_at < ?", (now,)
+                )
+                connection.execute(
+                    """
+                    INSERT INTO pending_links (
+                        link_id, link, user_id, metadata_json, created_at, expires_at
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(link_id) DO UPDATE SET
+                        link = excluded.link,
+                        user_id = excluded.user_id,
+                        metadata_json = excluded.metadata_json,
+                        created_at = excluded.created_at,
+                        expires_at = excluded.expires_at
+                    """,
+                    (link_id, link, user_id, metadata_json, now, expires_at),
+                )
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
 
     def retrieve_link(
         self, link_id: str, user_id: Optional[int] = None
     ) -> Optional[Dict]:
-        """
-        Retrieve link information.
+        """Retrieve an unexpired link, optionally enforcing its owner."""
+        now = time.time()
+        with self._lock, closing(self._connect()) as connection:
+            connection.execute(
+                "DELETE FROM pending_links WHERE expires_at < ?", (now,)
+            )
+            if user_id is None:
+                row = connection.execute(
+                    """
+                    SELECT link, user_id, metadata_json, created_at
+                    FROM pending_links
+                    WHERE link_id = ? AND expires_at >= ?
+                    """,
+                    (link_id, now),
+                ).fetchone()
+            else:
+                row = connection.execute(
+                    """
+                    SELECT link, user_id, metadata_json, created_at
+                    FROM pending_links
+                    WHERE link_id = ? AND user_id = ? AND expires_at >= ?
+                    """,
+                    (link_id, user_id, now),
+                ).fetchone()
 
-        Args:
-            link_id: Link identifier
-            user_id: Optional user ID for validation
-
-        Returns:
-            Link information or None if not found/expired
-        """
-        with self._lock:
-            self._cleanup_expired_locked()
-
-            link_data = self.store.get(link_id)
-            if not link_data:
-                return None
-
-            if user_id is not None and link_data["user_id"] != user_id:
-                return None
-
-            return dict(link_data)
+        return self._deserialize_link(row) if row is not None else None
 
     def consume_link(self, link_id: str, user_id: int) -> Optional[Dict]:
-        """Atomically retrieve and remove a link so one callback starts one download."""
-        with self._lock:
-            self._cleanup_expired_locked()
-            link_data = self.store.get(link_id)
-            if not link_data or link_data["user_id"] != user_id:
-                return None
+        """Atomically retrieve and delete a link for its owner exactly once."""
+        now = time.time()
+        with self._lock, closing(self._connect()) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            try:
+                connection.execute(
+                    "DELETE FROM pending_links WHERE expires_at < ?", (now,)
+                )
+                row = connection.execute(
+                    """
+                    SELECT link, user_id, metadata_json, created_at
+                    FROM pending_links
+                    WHERE link_id = ? AND user_id = ? AND expires_at >= ?
+                    """,
+                    (link_id, user_id, now),
+                ).fetchone()
 
-            self.store.pop(link_id, None)
-            return dict(link_data)
+                if row is None:
+                    connection.commit()
+                    return None
+
+                deleted = connection.execute(
+                    "DELETE FROM pending_links WHERE link_id = ? AND user_id = ?",
+                    (link_id, user_id),
+                )
+                if deleted.rowcount != 1:
+                    connection.rollback()
+                    return None
+
+                connection.commit()
+                return self._deserialize_link(row)
+            except Exception:
+                connection.rollback()
+                raise
+
+    @staticmethod
+    def _deserialize_link(row: sqlite3.Row) -> Dict:
+        """Convert a database row to the legacy LinkStore dictionary shape."""
+        try:
+            metadata = json.loads(row["metadata_json"])
+        except (TypeError, json.JSONDecodeError):
+            logger.warning("Invalid metadata JSON in pending-link database")
+            metadata = {}
+
+        return {
+            "link": row["link"],
+            "user_id": row["user_id"],
+            "metadata": metadata if isinstance(metadata, dict) else {},
+            "created_at": row["created_at"],
+        }
+
+    def cleanup_expired(self) -> int:
+        """Delete expired callback links and return the number of removed rows."""
+        now = time.time()
+        with self._lock, closing(self._connect()) as connection:
+            cursor = connection.execute(
+                "DELETE FROM pending_links WHERE expires_at < ?", (now,)
+            )
+            return cursor.rowcount
 
     def _cleanup_expired(self) -> None:
-        """Remove expired links."""
-        with self._lock:
-            self._cleanup_expired_locked()
-
-    def _cleanup_expired_locked(self) -> None:
-        """Remove expired links while the store lock is held."""
-        current_time = time.time()
-        expired_keys = [
-            key
-            for key, data in self.store.items()
-            if current_time - data["created_at"] > self.expiry_seconds
-        ]
-
-        for key in expired_keys:
-            self.store.pop(key, None)
-
-        if expired_keys:
-            logger.debug("Cleaned up %d expired links", len(expired_keys))
+        """Backward-compatible cleanup method."""
+        self.cleanup_expired()
 
 
 # Global link store instance
@@ -208,9 +302,15 @@ def register_spotify_handler(bot: TeleBot) -> None:
             logger.warning("Failed to get metadata for %s: %s", canonical_url, exc)
             metadata = {"valid": False, "error": str(exc)}
 
-        # Store link
+        # Persist the callback payload before showing a quality keyboard.
+        # Do not expose buttons that cannot be consumed after a restart.
         link_id = link_store.generate_link_id(canonical_url, user_id)
-        link_store.store_link(link_id, canonical_url, user_id, metadata)
+        try:
+            link_store.store_link(link_id, canonical_url, user_id, metadata)
+        except Exception:
+            logger.exception("Could not persist pending Spotify link for user %s", user_id)
+            bot.reply_to(message, messages.get("unexpected_error"))
+            return
 
         # Add to queue for tracking
         add_to_queue(canonical_url, chat_id)

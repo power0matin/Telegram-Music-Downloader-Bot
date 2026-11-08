@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -19,6 +20,79 @@ def test_link_store_does_not_leak_link_to_another_user():
 
     assert store.consume_link("abc", 99) is None
     assert store.consume_link("abc", 42) is not None
+
+
+def test_link_store_survives_reopen_and_preserves_metadata(tmp_path):
+    db_path = tmp_path / "pending_links.sqlite3"
+    first_store = LinkStore(expiry_seconds=60, db_path=db_path)
+    metadata = {"valid": True, "title": "Track", "artist": "Artist"}
+    first_store.store_link(
+        "restart-safe",
+        "https://open.spotify.com/track/123",
+        42,
+        metadata,
+    )
+
+    reopened_store = LinkStore(expiry_seconds=60, db_path=db_path)
+
+    assert reopened_store.retrieve_link("restart-safe", 42)["metadata"] == metadata
+    consumed = reopened_store.consume_link("restart-safe", 42)
+    assert consumed["link"] == "https://open.spotify.com/track/123"
+    assert consumed["metadata"] == metadata
+    assert first_store.consume_link("restart-safe", 42) is None
+
+
+def test_link_store_rejects_expired_link_after_reopen(monkeypatch, tmp_path):
+    clock = [1000.0]
+    monkeypatch.setattr("handlers.spotify_handler.time.time", lambda: clock[0])
+    db_path = tmp_path / "pending_links.sqlite3"
+    store = LinkStore(expiry_seconds=10, db_path=db_path)
+    store.store_link("expired", "https://open.spotify.com/track/123", 42)
+
+    clock[0] = 1011.0
+    reopened_store = LinkStore(expiry_seconds=10, db_path=db_path)
+
+    assert reopened_store.retrieve_link("expired", 42) is None
+    assert reopened_store.consume_link("expired", 42) is None
+
+
+def test_link_store_expiry_boundary_remains_valid_at_exact_ttl(
+    monkeypatch, tmp_path
+):
+    clock = [1000.0]
+    monkeypatch.setattr("handlers.spotify_handler.time.time", lambda: clock[0])
+    store = LinkStore(
+        expiry_seconds=10,
+        db_path=tmp_path / "pending_links.sqlite3",
+    )
+    store.store_link("boundary", "https://open.spotify.com/track/123", 42)
+
+    clock[0] = 1010.0
+
+    assert store.retrieve_link("boundary", 42) is not None
+
+
+def test_link_store_consumption_is_atomic_across_instances(tmp_path):
+    db_path = tmp_path / "pending_links.sqlite3"
+    stores = [
+        LinkStore(expiry_seconds=60, db_path=db_path)
+        for _ in range(12)
+    ]
+    stores[0].store_link(
+        "atomic",
+        "https://open.spotify.com/track/123",
+        42,
+        {"title": "Track"},
+    )
+
+    with ThreadPoolExecutor(max_workers=len(stores)) as executor:
+        results = list(
+            executor.map(lambda store: store.consume_link("atomic", 42), stores)
+        )
+
+    consumed = [result for result in results if result is not None]
+    assert len(consumed) == 1
+    assert consumed[0]["metadata"] == {"title": "Track"}
 
 
 def test_metadata_html_escapes_spotify_text():
