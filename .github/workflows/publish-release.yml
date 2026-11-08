@@ -82,7 +82,7 @@ jobs:
               + "\n\n---\n\n"
               + "**Full changelog:** [CHANGELOG.md](https://github.com/"
               + os.environ["GITHUB_REPOSITORY"]
-              + "/CHANGELOG.md)\n"
+              + "/blob/main/CHANGELOG.md)\n"
           )
           Path(output_path).write_text(notes, encoding="utf-8")
           PY
