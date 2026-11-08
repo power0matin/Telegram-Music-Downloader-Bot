@@ -156,7 +156,7 @@ class LinkStore:
             if user_id is None:
                 row = connection.execute(
                     """
-                    SELECT link, user_id, metadata_json, created_at
+                    SELECT link, user_id, metadata_json, created_at, expires_at
                     FROM pending_links
                     WHERE link_id = ? AND expires_at >= ?
                     """,
@@ -165,7 +165,7 @@ class LinkStore:
             else:
                 row = connection.execute(
                     """
-                    SELECT link, user_id, metadata_json, created_at
+                    SELECT link, user_id, metadata_json, created_at, expires_at
                     FROM pending_links
                     WHERE link_id = ? AND user_id = ? AND expires_at >= ?
                     """,
@@ -185,7 +185,7 @@ class LinkStore:
                 )
                 row = connection.execute(
                     """
-                    SELECT link, user_id, metadata_json, created_at
+                    SELECT link, user_id, metadata_json, created_at, expires_at
                     FROM pending_links
                     WHERE link_id = ? AND user_id = ? AND expires_at >= ?
                     """,
@@ -210,6 +210,62 @@ class LinkStore:
                 connection.rollback()
                 raise
 
+    def restore_link(
+        self, link_id: str, user_id: int, link_data: Dict
+    ) -> bool:
+        """
+        Restore a consumed callback without extending its original expiry.
+
+        Returns False when the original TTL has elapsed, the payload belongs to
+        another user, or the ID has already been re-created.
+        """
+        try:
+            stored_user_id = int(link_data["user_id"])
+            link = str(link_data["link"])
+            created_at = float(link_data["created_at"])
+            expires_at = float(link_data["expires_at"])
+            metadata = link_data.get("metadata", {})
+        except (KeyError, TypeError, ValueError):
+            logger.warning("Cannot restore incomplete pending-link payload %s", link_id)
+            return False
+
+        if stored_user_id != user_id or expires_at < time.time():
+            return False
+
+        metadata_json = json.dumps(
+            metadata if isinstance(metadata, dict) else {},
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        now = time.time()
+
+        with self._lock, closing(self._connect()) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            try:
+                connection.execute(
+                    "DELETE FROM pending_links WHERE expires_at < ?", (now,)
+                )
+                cursor = connection.execute(
+                    """
+                    INSERT OR IGNORE INTO pending_links (
+                        link_id, link, user_id, metadata_json, created_at, expires_at
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        link_id,
+                        link,
+                        user_id,
+                        metadata_json,
+                        created_at,
+                        expires_at,
+                    ),
+                )
+                connection.commit()
+                return cursor.rowcount == 1
+            except Exception:
+                connection.rollback()
+                raise
+
     @staticmethod
     def _deserialize_link(row: sqlite3.Row) -> Dict:
         """Convert a database row to the legacy LinkStore dictionary shape."""
@@ -224,6 +280,7 @@ class LinkStore:
             "user_id": row["user_id"],
             "metadata": metadata if isinstance(metadata, dict) else {},
             "created_at": row["created_at"],
+            "expires_at": row["expires_at"],
         }
 
     def cleanup_expired(self) -> int:
@@ -417,6 +474,13 @@ def get_stored_link_data(link_id: str, user_id: int) -> Optional[Dict]:
 def consume_stored_link_data(link_id: str, user_id: int) -> Optional[Dict]:
     """Atomically consume stored callback data for a single download attempt."""
     return link_store.consume_link(link_id, user_id)
+
+
+def restore_stored_link_data(
+    link_id: str, user_id: int, link_data: Dict
+) -> bool:
+    """Restore a consumed callback after worker-start failure, preserving its TTL."""
+    return link_store.restore_link(link_id, user_id, link_data)
 
 
 def format_metadata_html(
