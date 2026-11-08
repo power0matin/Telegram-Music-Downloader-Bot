@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import handlers.callback_handler as callback_handler
+import handlers.spotify_handler as spotify_handler
 from handlers.spotify_handler import LinkStore, format_metadata_html
 
 
@@ -109,6 +110,146 @@ def test_metadata_html_escapes_spotify_text():
     assert "<script>" not in text
 
 
+def test_spotify_message_defaults_to_metadata_preview_without_quality_keyboard(
+    monkeypatch
+):
+    class FakeBot:
+        def __init__(self):
+            self.message_handlers = []
+            self.replies = []
+
+        def message_handler(self, **_kwargs):
+            def decorator(handler):
+                self.message_handlers.append(handler)
+                return handler
+            return decorator
+
+        def reply_to(self, message, text, **kwargs):
+            self.replies.append((message, text, kwargs))
+
+    bot = FakeBot()
+    monkeypatch.setattr(
+        spotify_handler,
+        "config",
+        SimpleNamespace(enable_authorized_audio_delivery=False),
+    )
+    monkeypatch.setattr(
+        spotify_handler, "check_rate_limit", lambda _user_id: (True, 0)
+    )
+    monkeypatch.setattr(
+        spotify_handler, "sanitize_spotify_url", lambda url: url
+    )
+    monkeypatch.setattr(
+        spotify_handler, "validate_spotify_url", lambda _url: True
+    )
+    spotify_url = "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh"
+    monkeypatch.setattr(
+        spotify_handler, "get_canonical_spotify_url", lambda _url: spotify_url
+    )
+    monkeypatch.setattr(
+        spotify_handler,
+        "get_spotify_metadata",
+        lambda _url: {
+            "valid": True,
+            "type": "track",
+            "title": "Track",
+            "artist": "Artist",
+            "url": spotify_url,
+            "external_urls": {"spotify": spotify_url},
+        },
+    )
+    store_link = Mock()
+    add_to_queue = Mock()
+    monkeypatch.setattr(spotify_handler.link_store, "store_link", store_link)
+    monkeypatch.setattr(spotify_handler, "add_to_queue", add_to_queue)
+
+    spotify_handler.register_spotify_handler(bot)
+    handler = bot.message_handlers[0]
+    message = SimpleNamespace(
+        from_user=SimpleNamespace(id=42),
+        chat=SimpleNamespace(id=42),
+        text=spotify_url,
+    )
+
+    handler(message)
+
+    assert len(bot.replies) == 1
+    _, reply_text, kwargs = bot.replies[0]
+    assert "Track" in reply_text
+    assert spotify_url in reply_text
+    assert "reply_markup" not in kwargs
+    assert kwargs["parse_mode"] == "HTML"
+    store_link.assert_not_called()
+    add_to_queue.assert_not_called()
+
+
+def test_disabled_audio_delivery_rejects_existing_quality_callback(monkeypatch):
+    class FakeBot:
+        def __init__(self):
+            self.callback_handlers = []
+            self.answers = []
+
+        def callback_query_handler(self, **_kwargs):
+            def decorator(handler):
+                self.callback_handlers.append(handler)
+                return handler
+            return decorator
+
+        def answer_callback_query(self, callback_id, text):
+            self.answers.append((callback_id, text))
+
+    bot = FakeBot()
+    monkeypatch.setattr(
+        callback_handler,
+        "config",
+        SimpleNamespace(enable_authorized_audio_delivery=False),
+    )
+    get_link = Mock()
+    consume_link = Mock()
+    monkeypatch.setattr(callback_handler, "get_stored_link_data", get_link)
+    monkeypatch.setattr(callback_handler, "consume_stored_link_data", consume_link)
+    download = Mock()
+    monkeypatch.setattr(callback_handler, "download_and_send", download)
+
+    callback_handler.register_callback_handlers(bot)
+    handler = next(
+        item for item in bot.callback_handlers
+        if item.__name__ == "handle_quality_selection"
+    )
+    call = SimpleNamespace(
+        id="callback-id",
+        data="quality|320|abc123",
+        from_user=SimpleNamespace(id=42),
+        message=SimpleNamespace(
+            chat=SimpleNamespace(id=123),
+            message_id=55,
+        ),
+    )
+
+    handler(call)
+
+    assert len(bot.answers) == 1
+    assert bot.answers[0][0] == "callback-id"
+    get_link.assert_not_called()
+    consume_link.assert_not_called()
+    download.assert_not_called()
+
+
+def test_metadata_preview_always_contains_attributed_spotify_link():
+    spotify_url = "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh"
+    text = format_metadata_html(
+        {
+            "valid": False,
+            "url": spotify_url,
+            "external_urls": {"spotify": spotify_url},
+        },
+        link_label="Open on Spotify",
+    )
+
+    assert f'href="{spotify_url}"' in text
+    assert "Open on Spotify" in text
+
+
 def test_status_message_failures_do_not_block_download(monkeypatch):
     """Transient Telegram UI failures must not consume a link without delivery."""
 
@@ -140,6 +281,11 @@ def test_status_message_failures_do_not_block_download(monkeypatch):
             raise TimeoutError("Telegram status send timed out")
 
     download = Mock()
+    monkeypatch.setattr(
+        callback_handler,
+        "config",
+        SimpleNamespace(enable_authorized_audio_delivery=True),
+    )
     monkeypatch.setattr(callback_handler, "download_and_send", download)
     link_data = {
         "link": "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh",

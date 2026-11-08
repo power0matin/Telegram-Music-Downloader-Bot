@@ -145,19 +145,7 @@ class TestSpotifyMetadataExtractor:
             "thumbnail_url": "https://example.com/image.jpg",
         }
 
-        # Mock HTML embed page response (second call, fallback)
-        mock_html_response = Mock()
-        mock_html_response.status_code = 200
-        mock_html_response.text = """
-        <html>
-            <meta property="og:title" content="Never Gonna Give You Up">
-            <meta property="og:description" content="Rick Astley · Whenever You Need Somebody">
-            <meta property="og:image" content="https://example.com/image.jpg">
-        </html>
-        """
-
-        # Return oEmbed first, then HTML for fallback
-        mock_get.side_effect = [mock_oembed_response, mock_html_response]
+        mock_get.return_value = mock_oembed_response
 
         from utils.spotify_utils import SpotifyMetadataExtractor
 
@@ -171,7 +159,39 @@ class TestSpotifyMetadataExtractor:
         assert metadata["type"] == "track"
         assert metadata["title"] == "Never Gonna Give You Up"
         assert metadata["artist"] == "Rick Astley"
-        assert metadata["image_url"] == "https://example.com/image.jpg"
+        assert metadata["external_urls"]["spotify"] == (
+            "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh"
+        )
+        assert "image_url" not in metadata
+        mock_get.assert_called_once_with(
+            "https://open.spotify.com/oembed",
+            params={
+                "url": "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh"
+            },
+            timeout=10,
+        )
+
+    @patch("utils.spotify_utils.requests.Session.get")
+    def test_oembed_failure_does_not_scrape_embed_html(self, mock_get):
+        from utils.spotify_utils import SpotifyMetadataExtractor
+
+        response = Mock()
+        response.status_code = 403
+        mock_get.return_value = response
+
+        with SpotifyMetadataExtractor() as extractor:
+            metadata = extractor.extract_metadata(
+                "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh"
+            )
+
+        assert metadata["valid"] is True
+        assert metadata["title"] is None
+        assert metadata["external_urls"]["spotify"] == (
+            "https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh"
+        )
+        assert "image_url" not in metadata
+        mock_get.assert_called_once()
+
 
     def test_metadata_extraction_invalid_url(self):
         """Test metadata extraction with invalid URL."""

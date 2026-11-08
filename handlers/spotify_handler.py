@@ -302,6 +302,22 @@ def register_spotify_handler(bot: TeleBot) -> None:
             logger.warning("Failed to get metadata for %s: %s", canonical_url, exc)
             metadata = {"valid": False, "error": str(exc)}
 
+        metadata.setdefault("url", canonical_url)
+        metadata.setdefault("external_urls", {})
+        if isinstance(metadata["external_urls"], dict):
+            metadata["external_urls"].setdefault("spotify", canonical_url)
+
+        if not config.enable_authorized_audio_delivery:
+            response_text = messages.get("metadata_only")
+            metadata_text = format_metadata_html(
+                metadata,
+                link_label=messages.get("open_on_spotify"),
+            )
+            if metadata_text:
+                response_text += f"\n\n{metadata_text}"
+            bot.reply_to(message, response_text, parse_mode="HTML")
+            return
+
         # Persist the callback payload before showing a quality keyboard.
         # Do not expose buttons that cannot be consumed after a restart.
         link_id = link_store.generate_link_id(canonical_url, user_id)
@@ -330,7 +346,10 @@ def register_spotify_handler(bot: TeleBot) -> None:
 
         # Prepare response text with metadata
         response_text = messages.get("link_detected")
-        metadata_text = format_metadata_html(metadata)
+        metadata_text = format_metadata_html(
+            metadata,
+            link_label=messages.get("open_on_spotify"),
+        )
         if metadata_text:
             response_text += f"\n\n{metadata_text}"
 
@@ -400,14 +419,24 @@ def consume_stored_link_data(link_id: str, user_id: int) -> Optional[Dict]:
     return link_store.consume_link(link_id, user_id)
 
 
-def format_metadata_html(metadata: Dict) -> str:
-    """Build Telegram-safe HTML metadata text from untrusted track metadata."""
-    if not metadata.get("valid") or not metadata.get("title"):
-        return ""
+def format_metadata_html(
+    metadata: Dict, link_label: str = "Open on Spotify"
+) -> str:
+    """Render an attributed metadata preview with a direct Spotify link."""
+    lines = []
+    if metadata.get("valid") and metadata.get("title"):
+        title = html.escape(str(metadata.get("title") or "Unknown"))
+        lines.append(f"🎵 <b>{title}</b>")
+        artist = metadata.get("artist")
+        if artist:
+            lines.append(f"👤 {html.escape(str(artist))}")
 
-    title = html.escape(str(metadata.get("title") or "Unknown"))
-    artist = metadata.get("artist")
-    text = f"🎵 <b>{title}</b>"
-    if artist:
-        text += f"\n👤 {html.escape(str(artist))}"
-    return text
+    spotify_url = metadata.get("url") or (metadata.get("external_urls") or {}).get(
+        "spotify"
+    )
+    if spotify_url:
+        safe_url = html.escape(str(spotify_url), quote=True)
+        safe_label = html.escape(str(link_label))
+        lines.append(f'🔗 <a href="{safe_url}">{safe_label}</a>')
+
+    return "\n".join(lines)

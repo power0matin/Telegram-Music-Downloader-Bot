@@ -55,6 +55,24 @@ def _get_int(name: str, default: int) -> int:
     return value
 
 
+def _get_bool(name: str, default: bool = False) -> bool:
+    """Read a boolean environment variable without accepting ambiguous values."""
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+
+    value = raw.strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+
+    raise RuntimeError(
+        f"Invalid value for {name}: {raw!r}. "
+        "Use true/false, yes/no, on/off, or 1/0."
+    )
+
+
 def _require_range(name: str, value: int, minimum: int, maximum: int) -> int:
     """Validate an integer configuration value against an inclusive range."""
     if not minimum <= value <= maximum:
@@ -104,6 +122,7 @@ class Config:
     cookie_file: str
     ytdlp_extra_args: str
     proxy_url: str
+    enable_authorized_audio_delivery: bool
     audio_providers: Tuple[str, ...] = ("soundcloud", "youtube-music", "youtube")
 
     supported_languages: Tuple[str, ...] = ("en", "fa")
@@ -182,9 +201,14 @@ class Config:
         # This is the "no manual cookies" fix — set it and forget it.
         proxy_url = _get_str("PROXY_URL", "")
 
-        # AUDIO_PROVIDERS: comma-separated fallback order for spotdl's audio
-        # sources. SoundCloud-first reduces dependence on YouTube from common
-        # datacenter IPs; YouTube Music and YouTube remain fallbacks.
+        # Audio delivery is disabled unless the operator has documented
+        # platform permissions and the rights needed to reproduce and deliver
+        # each audio file to Telegram recipients.
+        enable_authorized_audio_delivery = _get_bool(
+            "ENABLE_AUTHORIZED_AUDIO_DELIVERY", False
+        )
+
+        # AUDIO_PROVIDERS is only used when authorized audio delivery is enabled.
         audio_providers_raw = _get_str(
             "AUDIO_PROVIDERS", "soundcloud,youtube-music,youtube"
         )
@@ -248,6 +272,7 @@ class Config:
             cookie_file=cookie_file,
             ytdlp_extra_args=ytdlp_extra_args,
             proxy_url=proxy_url,
+            enable_authorized_audio_delivery=enable_authorized_audio_delivery,
             audio_providers=audio_providers,
             supported_languages=supported_languages,
         )

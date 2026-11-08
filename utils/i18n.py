@@ -15,33 +15,28 @@ class Messages:
         "en": {
             # Welcome and help messages
             "welcome": (
-                "🎵 Welcome to the Spotify Downloader Bot!\n\n"
-                "Send me a valid Spotify link and I'll download it for you:\n"
+                "🎵 Welcome to the Spotify Link Preview Bot!\n\n"
+                "Send a Spotify link to see the metadata preview and open it "
+                "in Spotify. Audio delivery is disabled by default.\n"
                 "• Track: https://open.spotify.com/track/...\n"
                 "• Album: https://open.spotify.com/album/...\n"
                 "• Playlist: https://open.spotify.com/playlist/...\n\n"
                 "Use /help for more information."
             ),
             "help": (
-                "🎵 **Spotify Downloader Bot Help**\n\n"
+                "🎵 **Spotify Link Preview Bot Help**\n\n"
                 "**Available Commands:**\n"
                 "/start - Show welcome message\n"
                 "/help - Show this help message\n\n"
                 "**How to use:**\n"
-                "1. Send me a Spotify link\n"
-                "2. Choose audio quality (128kbps or 320kbps)\n"
-                "3. Wait for download to complete\n"
-                "4. Enjoy your music!\n\n"
-                "**Supported formats:**\n"
-                "• Tracks\n"
-                "• Albums\n"
-                "• Playlists\n\n"
-                "**Quality options:**\n"
-                "• 128 kbps - Good quality, smaller file size\n"
-                "• 320 kbps - Larger MP3 output; source quality depends on provider\n\n"
+                "1. Send a public Spotify track, album, or playlist link\n"
+                "2. Review the limited metadata preview\n"
+                "3. Open the item directly in Spotify\n\n"
+                "Audio-file delivery is disabled by default. It may only be "
+                "enabled by an operator after obtaining required written platform "
+                "permissions and all rights-holder licences. See docs/COMPLIANCE.md.\n\n"
                 "**Rate limits:**\n"
-                f"• {config.rate_limit_requests} downloads per {config.rate_limit_window_seconds} seconds\n\n"
-                "**Note:** Audio is matched through the configured providers using Spotify metadata."
+                f"• {config.rate_limit_requests} requests per {config.rate_limit_window_seconds} seconds"
             ),
             # Error messages
             "text_only": "Please send a text message containing a Spotify link.",
@@ -98,6 +93,11 @@ class Messages:
             "track_not_found": "❌ Track not found. Please check the Spotify link.",
             "track_unavailable": "❌ This track is currently unavailable.",
             # Success messages
+            "metadata_only": (
+                "ℹ️ Audio delivery is disabled. Here is the available Spotify metadata preview:"
+            ),
+            "audio_delivery_disabled": "Audio-file delivery is disabled on this bot.",
+            "open_on_spotify": "Open on Spotify",
             "link_detected": (
                 "✅ Valid Spotify link detected!\n"
                 "Please choose your preferred quality:"
@@ -124,33 +124,29 @@ class Messages:
         "fa": {
             # Welcome and help messages
             "welcome": (
-                "🎵 به ربات دانلود Spotify خوش آمدید!\n\n"
-                "لطفاً یک لینک معتبر Spotify ارسال کنید:\n"
+                "🎵 به ربات پیش‌نمایش لینک Spotify خوش آمدید!\n\n"
+                "یک لینک Spotify بفرستید تا اطلاعات محدود آن نمایش داده شود "
+                "و بتوانید مورد را مستقیماً در Spotify باز کنید. ارسال فایل صوتی "
+                "به‌صورت پیش‌فرض غیرفعال است.\n"
                 "• آهنگ: https://open.spotify.com/track/...\n"
                 "• آلبوم: https://open.spotify.com/album/...\n"
                 "• پلی‌لیست: https://open.spotify.com/playlist/...\n\n"
                 "برای اطلاعات بیشتر از /help استفاده کنید."
             ),
             "help": (
-                "🎵 **راهنمای ربات دانلود Spotify**\n\n"
+                "🎵 **راهنمای ربات پیش‌نمایش لینک Spotify**\n\n"
                 "**دستورات موجود:**\n"
                 "/start - نمایش پیام خوش‌آمدگویی\n"
                 "/help - نمایش این راهنما\n\n"
                 "**نحوه استفاده:**\n"
-                "۱. یک لینک Spotify ارسال کنید\n"
-                "۲. کیفیت صوتی مورد نظر را انتخاب کنید\n"
-                "۳. منتظر اتمام دانلود بمانید\n"
-                "۴. از موسیقی خود لذت ببرید!\n\n"
-                "**فرمت‌های پشتیبانی شده:**\n"
-                "• آهنگ‌ها\n"
-                "• آلبوم‌ها\n"
-                "• پلی‌لیست‌ها\n\n"
-                "**گزینه‌های کیفیت:**\n"
-                "• ۱۲۸ کیلوبیت - کیفیت خوب، حجم کمتر\n"
-                "• ۳۲۰ کیلوبیت - خروجی MP3 حجیم‌تر؛ کیفیت منبع به سرویس صوتی بستگی دارد\n\n"
-                "**محدودیت‌های نرخ:**\n"
-                f"• {config.rate_limit_requests} دانلود در هر {config.rate_limit_window_seconds} ثانیه\n\n"
-                "**توجه:** صدا بر اساس اطلاعات Spotify از منابع صوتی تنظیم‌شده دریافت می‌شود."
+                "۱. لینک عمومی آهنگ، آلبوم یا پلی‌لیست Spotify را بفرستید\n"
+                "۲. پیش‌نمایش محدود اطلاعات را ببینید\n"
+                "۳. مورد را مستقیماً در Spotify باز کنید\n\n"
+                "ارسال فایل صوتی به‌صورت پیش‌فرض غیرفعال است. فعال‌سازی آن فقط "
+                "پس از دریافت مجوزهای کتبی لازم از پلتفرم‌ها و مجوزهای صاحبان "
+                "حقوق فایل امکان‌پذیر است. جزئیات در docs/COMPLIANCE.md.\n\n"
+                "**محدودیت نرخ:**\n"
+                f"• {config.rate_limit_requests} درخواست در هر {config.rate_limit_window_seconds} ثانیه"
             ),
             # Error messages
             "text_only": "لطفاً یک پیام متنی حاوی لینک Spotify ارسال کنید.",
@@ -205,6 +201,11 @@ class Messages:
             "track_not_found": "❌ آهنگ پیدا نشد. لطفاً لینک Spotify را بررسی کنید.",
             "track_unavailable": "❌ این آهنگ در حال حاضر در دسترس نیست.",
             # Success messages
+            "metadata_only": (
+                "ℹ️ ارسال فایل صوتی غیرفعال است. پیش‌نمایش اطلاعات در دسترس Spotify:"
+            ),
+            "audio_delivery_disabled": "ارسال فایل صوتی در این ربات غیرفعال است.",
+            "open_on_spotify": "باز کردن در Spotify",
             "link_detected": (
                 "✅ لینک معتبر Spotify شناسایی شد!\n"
                 "لطفاً کیفیت مورد نظر خود را انتخاب کنید:"

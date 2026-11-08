@@ -176,10 +176,9 @@ class SpotifyURLValidator:
 
 class SpotifyMetadataExtractor:
     """
-    Extract metadata from Spotify URLs using public endpoints.
+    Extract a limited metadata preview through Spotify's official oEmbed endpoint.
 
-    For reliability, this uses the official oEmbed endpoint where possible,
-    with a lightweight HTML fallback if required.
+    This class does not scrape embed-page HTML or retrieve artwork.
     """
 
     OEMBED_URL = "https://open.spotify.com/oembed"
@@ -233,8 +232,7 @@ class SpotifyMetadataExtractor:
             "artist": None,
             "album": None,
             "duration_ms": None,
-            "image_url": None,
-            "external_urls": {},
+            "external_urls": {"spotify": canonical_url},
         }
 
         # 1) Try oEmbed endpoint (JSON, stable)
@@ -249,8 +247,6 @@ class SpotifyMetadataExtractor:
 
                 # Example oEmbed fields: title, author_name, thumbnail_url, provider_url, etc.
                 metadata["title"] = data.get("title")
-                metadata["image_url"] = data.get("thumbnail_url")
-                metadata["external_urls"]["spotify"] = canonical_url
 
                 author_name = data.get("author_name")
                 if content_type == SpotifyType.TRACK and author_name:
@@ -272,54 +268,9 @@ class SpotifyMetadataExtractor:
         except Exception as exc:  # noqa: BLE001
             logger.warning("oEmbed metadata fetch failed for %s: %s", url, exc)
 
-        # 2) Fallback: embed page HTML scraping for minimal info
-        try:
-            embed_url = (
-                f"https://open.spotify.com/embed/{content_type.value}/{spotify_id}"
-            )
-            response = self.session.get(embed_url, timeout=10)
-
-            if response.status_code == 200:
-                html_content = response.text
-
-                # Title from og:title
-                title_match = re.search(
-                    r'<meta property="og:title" content="([^"]*)"', html_content
-                )
-                if title_match:
-                    metadata["title"] = title_match.group(1)
-
-                # Description often contains artist/album
-                desc_match = re.search(
-                    r'<meta property="og:description" content="([^"]*)"',
-                    html_content,
-                )
-                if desc_match:
-                    description = desc_match.group(1)
-                    if content_type == SpotifyType.TRACK and "·" in description:
-                        parts = [p.strip() for p in description.split("·")]
-                        if len(parts) >= 1:
-                            metadata["artist"] = parts[0] or None
-                        if len(parts) >= 2:
-                            metadata["album"] = parts[1] or None
-
-                # Image
-                image_match = re.search(
-                    r'<meta property="og:image" content="([^"]*)"', html_content
-                )
-                if image_match:
-                    metadata["image_url"] = image_match.group(1)
-
-                logger.debug(
-                    "Extracted metadata via HTML for %s: %s",
-                    content_type.value,
-                    metadata["title"],
-                )
-
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Failed to extract metadata for %s: %s", url, exc)
-            metadata["error"] = f"Failed to extract metadata: {exc}"
-
+        # Preview-only fallback: preserve the canonical Spotify URL if oEmbed
+        # is unavailable. Do not scrape embed HTML or fetch artwork.
+        metadata["error"] = "Spotify oEmbed metadata is unavailable"
         return metadata
 
     def get_track_info(self, url: str) -> Dict[str, Any]:

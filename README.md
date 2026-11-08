@@ -36,7 +36,7 @@
 * **Spotify content types**: Tracks, albums, playlists
 * **MP3 bitrate selection**: 128 kbps / 320 kbps
 * **Metadata extraction**: Artist, title, album
-* **Status updates**: Download state and delivery feedback
+* **Status updates**: Metadata preview and Spotify-link feedback
 * **Smart validation**: Strict Spotify URL checks
 
 > **Audio quality note:** 320 kbps selects the MP3 output bitrate. It cannot
@@ -54,7 +54,7 @@
 
 * **Multilingual**: English & Persian (Farsi)
 * **Commands**: `/start`, `/help`
-* **Inline UI**: Quality selector keyboards
+* **Inline UI**: Spotify link previews; quality selection only in authorized audio-delivery mode
 * **File hygiene**: Auto-cleanup & size limits
 
 ### 🔧 Developer
@@ -71,7 +71,7 @@
 * **Python 3.11–3.14** (required by spotDL 4.6.x)
 * **Telegram Bot Token** (from [@BotFather](https://t.me/BotFather))
 * **Git**
-* **FFmpeg**
+* **FFmpeg** (required only if authorized audio delivery is enabled)
 * **Ubuntu 24.04** for the automated VPS installer; Ubuntu 22.04 requires a separately installed Python 3.11–3.14 runtime
 
 ### 1) Clone & Setup
@@ -106,6 +106,8 @@ export LOG_LEVEL="INFO"
 python bot.py
 ```
 
+In the default configuration, sending a Spotify URL returns a limited metadata preview and a direct Spotify link. The bot does not download or forward audio. Read [docs/COMPLIANCE.md](docs/COMPLIANCE.md) before considering the optional audio-delivery path.
+
 ## 🛠️ Installation & Setup
 
 ### Environment Variables
@@ -113,22 +115,22 @@ python bot.py
 | Variable                    | Description                            | Default     |
 | --------------------------- | -------------------------------------- | ----------- |
 | `BOT_TOKEN`                 | **Required** — Telegram bot token      | —           |
-| `DOWNLOAD_DIR`              | Storage directory for downloads        | `downloads` |
+| `DOWNLOAD_DIR`              | Temporary storage used only by authorized audio-delivery mode | `downloads` |
 | `QUEUE_PATH`                | Queue tracking file                     | `queue/queue.json` |
-| `MAX_DOWNLOAD_SIZE_MB`      | Legacy MiB setting; effective audio cap is 49,000,000 bytes | `50` |
+| `MAX_DOWNLOAD_SIZE_MB`      | Authorized audio mode only; legacy MiB setting, effective cap 49,000,000 bytes | `50` |
 | `RATE_LIMIT_REQUESTS`       | Max requests per window                | `20`        |
 | `RATE_LIMIT_WINDOW_SECONDS` | Window length (seconds)                | `60`        |
-| `DEFAULT_QUALITY`           | Default audio quality (`128` or `320`) | `320`       |
+| `DEFAULT_QUALITY`           | Authorized audio mode only: MP3 output bitrate | `320`       |
 | `LOG_LEVEL`                 | Logging level                          | `INFO`      |
 | `DEFAULT_LANGUAGE`          | Default locale                         | `en`        |
-| `DOWNLOAD_TIMEOUT_SECONDS`  | Per-attempt spotDL timeout              | `900`       |
-| `UPLOAD_TIMEOUT_SECONDS`    | Telegram audio upload timeout           | `180`       |
-| `UPLOAD_RETRIES`            | Transient Telegram upload attempts      | `3`         |
-| `MAX_CONCURRENT_DOWNLOADS`  | Global concurrent download limit        | `3`         |
-| `AUDIO_PROVIDERS`           | spotDL provider fallback order          | `soundcloud,youtube-music,youtube` |
-| `COOKIE_FILE`               | Optional Netscape cookies file for yt-dlp | —         |
-| `PROXY_URL`                 | Optional HTTP(S) proxy for audio providers | —        |
-| `YTDLP_EXTRA_ARGS`          | Optional raw yt-dlp arguments passed by spotDL | —    |
+| `DOWNLOAD_TIMEOUT_SECONDS`  | Authorized audio mode only: spotDL timeout | `900`       |
+| `UPLOAD_TIMEOUT_SECONDS`    | Authorized audio mode only: Telegram upload timeout | `180`       |
+| `UPLOAD_RETRIES`            | Authorized audio mode only: transient upload attempts | `3`         |
+| `MAX_CONCURRENT_DOWNLOADS`  | Authorized audio mode only: concurrent worker limit | `3`         |
+| `AUDIO_PROVIDERS`           | Authorized audio mode only: approved provider fallback order | `soundcloud,youtube-music,youtube` |
+| `COOKIE_FILE`               | Authorized audio mode only: provider cookie file | —         |
+| `PROXY_URL`                 | Authorized audio mode only: provider proxy | —        |
+| `YTDLP_EXTRA_ARGS`          | Authorized audio mode only: extra yt-dlp arguments | —    |
 
 ## 🚀 Production Deployment
 

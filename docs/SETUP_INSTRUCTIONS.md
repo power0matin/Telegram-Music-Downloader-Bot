@@ -40,6 +40,10 @@ The installer validates the selected interpreter and recreates an existing virtu
 
 `MAX_DOWNLOAD_SIZE_MB` is a legacy setting name and continues to use its original MiB (1,048,576-byte) interpretation. To avoid breaking existing `.env` files, its default remains `50`. The actual audio file ceiling is capped at 49,000,000 bytes (49 decimal MB), leaving headroom below Telegram's documented 50 MB `sendAudio` limit. Existing deployments do not need to change this setting.
 
+### Default operating mode
+
+The default configuration is metadata-preview-only: the bot displays limited Spotify metadata and a direct link to Spotify. It does not download or forward audio files. The optional audio-delivery path is disabled unless `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` is explicitly set by the operator after obtaining the written platform permissions and rights-holder licences described in [COMPLIANCE.md](COMPLIANCE.md).
+
 ### 2. Get Telegram Bot Token
 
 1. Start a chat with [@BotFather](https://t.me/BotFather) on Telegram
