@@ -192,7 +192,7 @@ The repository includes `setup_vps.sh`, which installs the bot as a systemd serv
 
 The script refreshes the apt package index, installs required dependencies, creates a service user, downloads the repository, creates a virtual environment, and configures systemd. It does not run a system-wide `apt-get upgrade`.
 
-Run it on a server where you have reviewed and are comfortable applying Ubuntu package upgrades. On a production server, take a backup and schedule a maintenance window first.
+The installer does not upgrade all system packages. Review the package list before running it; on a production server, take a backup and schedule a maintenance window first.
 
 ### Ubuntu 24.04
 
