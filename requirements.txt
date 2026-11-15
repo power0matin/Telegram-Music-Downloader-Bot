@@ -5,7 +5,7 @@ pyTelegramBotAPI>=4.37.1,<5.0.0
 requests>=2.32.3,<3.0.0
 
 # Environment variable management
-python-dotenv>=1.0.0,<2.0.0
+python-dotenv>=1.2.4,<2.0.0
 
 # Spotify downloader
 # Pin the downloader version to the CLI contract covered by tests/test_downloader.py.
