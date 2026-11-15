@@ -1,5 +1,5 @@
 # Core Telegram Bot API
-pyTelegramBotAPI>=4.14.0,<5.0.0
+pyTelegramBotAPI>=4.37.1,<5.0.0
 
 # HTTP requests for metadata extraction
 requests>=2.32.3,<3.0.0
