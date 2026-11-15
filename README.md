@@ -210,7 +210,16 @@ For a complete list of settings, see [`.env.example`](.env.example). The most us
 | --- | --- | --- |
 | `BOT_TOKEN` | Telegram token from BotFather. Required. | — |
 | `DEFAULT_LANGUAGE` | Bot message language: `en` or `fa`. | `en` fallback; sample file uses `fa` |
-| `ENABLE_AUTHORIZED_AUDIO_DELIVERY` | Controls the optional audio-delivery path. Keep disabled for normal use. | `false` |
+| `ENABLE_AUTHORIZED_AUDIO_DELIVERY` | Enables the optional spotDL audio workflow when set to `true`; requires the acknowledgement below. | `false` |
+| `AUDIO_DELIVERY_PERMISSIONS_ACK` | Required operator acknowledgement when audio delivery is enabled; it grants no permission. | `false` |
+| `AUDIO_PROVIDERS` | Ordered spotDL providers used only by the optional audio path. | `soundcloud,youtube-music,youtube` |
+| `DEFAULT_QUALITY` | Default audio bitrate for the optional workflow. | `320` |
+| `MAX_DOWNLOAD_SIZE_MB` | Configured size ceiling; Telegram upload checks are capped at 49,000,000 bytes. | `50` |
+| `DOWNLOAD_TIMEOUT_SECONDS` | Timeout for a spotDL download attempt. | `900` |
+| `UPLOAD_TIMEOUT_SECONDS` | Timeout for one Telegram audio upload attempt. | `180` |
+| `UPLOAD_RETRIES` | Maximum Telegram upload attempts. | `3` |
+| `MAX_CONCURRENT_DOWNLOADS` | Maximum concurrent audio workers. | `3` |
+| `SPOTDL_EXECUTABLE` | Optional explicit spotDL path; otherwise the active venv and then `PATH` are checked. | automatic |
 | `RATE_LIMIT_REQUESTS` | Number of messages allowed in the rate-limit window. | `20` |
 | `RATE_LIMIT_WINDOW_SECONDS` | Length of the rate-limit window in seconds. | `60` |
 | `LOG_LEVEL` | Logging detail: `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`. | `INFO` |
@@ -219,7 +228,7 @@ The application reads `.env` automatically at startup. After changing a setting,
 
 ### About audio delivery
 
-The optional legacy audio-delivery code is disabled by default. Do not enable it just to make the bot download songs from Spotify links. Enabling it requires written platform permissions and the appropriate rights-holder licences for the exact use. Both `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` and `AUDIO_DELIVERY_PERMISSIONS_ACK=true` are required. The acknowledgement does not grant permission. Read [docs/COMPLIANCE.md](docs/COMPLIANCE.md) and [the audio-delivery operations guide](docs/AUDIO_DELIVERY.md).
+The optional audio-delivery workflow is present in the code but disabled by default. It resolves audio through the configured spotDL providers; it does not fetch an audio file from Spotify itself. Enable it only when written platform permissions and rights-holder licences cover the exact workflow. Both `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` and `AUDIO_DELIVERY_PERMISSIONS_ACK=true` are required. The acknowledgement does not grant permission. Provider matching and delivery are best-effort, not guaranteed. See [docs/COMPLIANCE.md](docs/COMPLIANCE.md) and [docs/AUDIO_DELIVERY.md](docs/AUDIO_DELIVERY.md).
 
 ---
 
