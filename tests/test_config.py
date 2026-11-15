@@ -27,6 +27,7 @@ def test_authorized_audio_delivery_is_disabled_by_default(monkeypatch, tmp_path)
     config = Config.from_env()
 
     assert config.enable_authorized_audio_delivery is False
+    assert config.audio_delivery_permissions_acknowledged is False
 
 
 def test_authorized_audio_delivery_requires_explicit_boolean_value(
@@ -35,9 +36,15 @@ def test_authorized_audio_delivery_requires_explicit_boolean_value(
     monkeypatch.setenv("DOWNLOAD_DIR", str(tmp_path / "downloads"))
     monkeypatch.setenv("QUEUE_PATH", str(tmp_path / "queue" / "queue.json"))
     monkeypatch.setenv("ENABLE_AUTHORIZED_AUDIO_DELIVERY", "true")
+    monkeypatch.delenv("AUDIO_DELIVERY_PERMISSIONS_ACK", raising=False)
 
+    with pytest.raises(RuntimeError, match="AUDIO_DELIVERY_PERMISSIONS_ACK"):
+        Config.from_env()
+
+    monkeypatch.setenv("AUDIO_DELIVERY_PERMISSIONS_ACK", "true")
     enabled = Config.from_env()
     assert enabled.enable_authorized_audio_delivery is True
+    assert enabled.audio_delivery_permissions_acknowledged is True
 
     monkeypatch.setenv("ENABLE_AUTHORIZED_AUDIO_DELIVERY", "not-a-boolean")
     import pytest
