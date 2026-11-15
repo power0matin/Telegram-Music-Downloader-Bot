@@ -1,6 +1,6 @@
 # Compliance decision: Spotify link preview and audio delivery
 
-**Review date:** 2026-11-08
+**Review date:** 2026-11-15
 
 ## Decision
 
@@ -16,9 +16,10 @@ The optional legacy audio-delivery code is disabled unless the operator explicit
 
 ```dotenv
 ENABLE_AUTHORIZED_AUDIO_DELIVERY=true
+AUDIO_DELIVERY_PERMISSIONS_ACK=true
 ```
 
-This setting is an **operator attestation only**. It does not grant or verify any permission. Do not enable it unless all of the following have been obtained and reviewed for the exact intended workflow:
+These switches are **operator attestations only**. It does not grant or verify any permission. Do not enable it unless all of the following have been obtained and reviewed for the exact intended workflow:
 
 1. Written Spotify permission or other documented platform approval covering the proposed use of Spotify metadata/identifiers to identify audio on other services and deliver that audio through this bot. Do not assume that API access or oEmbed access authorizes this integration.
 2. Permission under the terms and official download mechanisms of each configured audio provider. Examples:
@@ -39,7 +40,7 @@ This is a limited link-preview use, not a general-purpose metadata or artwork AP
 
 ## Operational safeguards
 
-- Keep `ENABLE_AUTHORIZED_AUDIO_DELIVERY=false` for ordinary deployments.
+- Keep both `ENABLE_AUTHORIZED_AUDIO_DELIVERY=false` and `AUDIO_DELIVERY_PERMISSIONS_ACK=false` for ordinary deployments.
 - Do not treat a user's request, account subscription, or statement of ownership as platform approval.
 - Do not bypass DRM, access controls, geographic restrictions, authentication, rate limits, anti-bot protections, or provider download settings.
 - Do not use downloaded files, metadata, or artwork for training, cataloguing, or other secondary uses without a separate rights basis.

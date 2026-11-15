@@ -5,7 +5,7 @@ set -euo pipefail
 # Telegram Spotify Downloader Bot - VPS Setup Script (Ubuntu)
 # ============================================================
 # This script installs all dependencies and runs the bot
-# on Ubuntu 24.04, or Ubuntu 22.04 with Python 3.11-3.14 installed.
+# on Ubuntu 24.04, or Ubuntu 22.04 with Python 3.11-3.15 installed.
 # Override the interpreter with: sudo PYTHON_BIN=python3.11 ./setup_vps.sh
 #
 # Usage:
@@ -59,7 +59,6 @@ fi
 # ---- System update & dependencies ----
 info "Updating system packages..."
 apt-get update -qq
-apt-get upgrade -y -qq
 
 info "Installing system dependencies..."
 apt-get install -y -qq \
@@ -72,11 +71,11 @@ apt-get install -y -qq \
 
 # Verify installations
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
-    error "Python interpreter '$PYTHON_BIN' was not found. Set PYTHON_BIN to an installed Python 3.11-3.14 executable."
+    error "Python interpreter '$PYTHON_BIN' was not found. Set PYTHON_BIN to an installed Python 3.11-3.15 executable."
 fi
 "$PYTHON_BIN" --version || error "Selected Python interpreter could not be executed."
-if ! "$PYTHON_BIN" -c 'import sys; raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 15) else 1)'; then
-    error "Python 3.11-3.14 is required by spotDL 4.6.x. Ubuntu 24.04 provides Python 3.12; on Ubuntu 22.04 install Python 3.11-3.14 and rerun with PYTHON_BIN=python3.11."
+if ! "$PYTHON_BIN" -c 'import sys; raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 16) else 1)'; then
+    error "Python 3.11-3.15 is required by spotDL 4.6.x. Ubuntu 24.04 provides Python 3.12; on Ubuntu 22.04 install Python 3.11-3.15 and rerun with PYTHON_BIN=python3.11."
 fi
 PYTHON_MINOR="$("$PYTHON_BIN" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
 PYTHON_VENV_PACKAGE="python${PYTHON_MINOR}-venv"
@@ -109,7 +108,7 @@ fi
 
 # ---- Setup virtual environment ----
 info "Setting up Python virtual environment..."
-if [ -x "venv/bin/python" ] && ! venv/bin/python -c 'import sys; raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 15) else 1)'; then
+if [ -x "venv/bin/python" ] && ! venv/bin/python -c 'import sys; raise SystemExit(0 if (3, 11) <= sys.version_info[:2] < (3, 16) else 1)'; then
     warn "Existing virtual environment uses an unsupported Python version; recreating it."
     rm -rf venv
 fi
@@ -161,10 +160,12 @@ UPLOAD_TIMEOUT_SECONDS=180
 UPLOAD_RETRIES=3
 MAX_CONCURRENT_DOWNLOADS=3
 LOG_LEVEL=INFO
-DEFAULT_LANGUAGE=en
+DEFAULT_LANGUAGE=fa
 RATE_LIMIT_REQUESTS=20
 RATE_LIMIT_WINDOW_SECONDS=60
-# Used only when ENABLE_AUTHORIZED_AUDIO_DELIVERY=true and fully authorized.
+# Keep both switches false unless permissions and licences are documented.
+ENABLE_AUTHORIZED_AUDIO_DELIVERY=false
+AUDIO_DELIVERY_PERMISSIONS_ACK=false
 AUDIO_PROVIDERS=soundcloud,youtube-music,youtube
 EOF
 fi
@@ -205,6 +206,7 @@ ReadWritePaths=${BOT_DIR}/downloads ${BOT_DIR}/queue ${BOT_DIR}/logs ${BOT_RUNTI
 # Environment
 Environment=PYTHONUNBUFFERED=1
 Environment=HOME=${BOT_RUNTIME_DIR}
+Environment="PATH=${BOT_DIR}/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 
 [Install]
 WantedBy=multi-user.target

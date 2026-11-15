@@ -123,6 +123,7 @@ class Config:
     ytdlp_extra_args: str
     proxy_url: str
     enable_authorized_audio_delivery: bool
+    audio_delivery_permissions_acknowledged: bool
     audio_providers: Tuple[str, ...] = ("soundcloud", "youtube-music", "youtube")
 
     supported_languages: Tuple[str, ...] = ("en", "fa")
@@ -207,6 +208,14 @@ class Config:
         enable_authorized_audio_delivery = _get_bool(
             "ENABLE_AUTHORIZED_AUDIO_DELIVERY", False
         )
+        audio_delivery_permissions_acknowledged = _get_bool(
+            "AUDIO_DELIVERY_PERMISSIONS_ACK", False
+        )
+        if enable_authorized_audio_delivery and not audio_delivery_permissions_acknowledged:
+            raise RuntimeError(
+                "AUDIO_DELIVERY_PERMISSIONS_ACK must be true before enabling audio delivery. "
+                "This is an operator attestation, not a grant of legal or platform permission."
+            )
 
         # AUDIO_PROVIDERS is only used when authorized audio delivery is enabled.
         audio_providers_raw = _get_str(
@@ -273,6 +282,7 @@ class Config:
             ytdlp_extra_args=ytdlp_extra_args,
             proxy_url=proxy_url,
             enable_authorized_audio_delivery=enable_authorized_audio_delivery,
+            audio_delivery_permissions_acknowledged=audio_delivery_permissions_acknowledged,
             audio_providers=audio_providers,
             supported_languages=supported_languages,
         )

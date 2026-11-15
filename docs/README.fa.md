@@ -2,7 +2,7 @@
 
 [![وضعیت CI](https://github.com/power0matin/Telegram-Music-Downloader-Bot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/power0matin/Telegram-Music-Downloader-Bot/actions/workflows/ci.yml)
 [![آخرین نسخه](https://img.shields.io/github/v/release/power0matin/Telegram-Music-Downloader-Bot)](https://github.com/power0matin/Telegram-Music-Downloader-Bot/releases/latest)
-[![Python](https://img.shields.io/badge/Python-3.11--3.14-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.11--3.15-blue)](https://www.python.org/)
 [![License](https://img.shields.io/github/license/power0matin/Telegram-Music-Downloader-Bot)](../LICENSE)
 
 این ربات لینک آهنگ، آلبوم یا پلی‌لیست Spotify را در تلگرام تشخیص می‌دهد، در صورت دسترس بودن اطلاعات محدودی مثل عنوان و نام سازنده را نمایش می‌دهد و لینک مستقیم همان محتوا در Spotify را در اختیار کاربر می‌گذارد.
@@ -50,7 +50,7 @@
 
 موارد زیر لازم است:
 
-- Python نسخهٔ **۳.۱۱ تا ۳.۱۴**
+- Python نسخهٔ **۳.۱۱ تا ۳.۱۵**
 - Git
 - اتصال اینترنت
 - حساب تلگرام
@@ -78,11 +78,11 @@ sudo apt update
 sudo apt install -y git python3 python3-venv python3-pip
 ```
 
-Python پیش‌فرض Ubuntu 22.04 قدیمی‌تر از نسخهٔ موردنیاز پروژه است؛ قبل از ادامه باید Python نسخهٔ ۳.۱۱ تا ۳.۱۴ را جداگانه نصب کنی.
+Python پیش‌فرض Ubuntu 22.04 قدیمی‌تر از نسخهٔ موردنیاز پروژه است؛ قبل از ادامه باید Python نسخهٔ ۳.۱۱ تا ۳.۱۵ را جداگانه نصب کنی.
 
 **Windows:** [Python](https://www.python.org/downloads/) و [Git](https://git-scm.com/downloads) را نصب کن. هنگام نصب Python گزینهٔ اضافه‌کردن آن به PATH را فعال کن.
 
-**macOS:** Python نسخهٔ ۳.۱۱ تا ۳.۱۴ را از [وب‌سایت رسمی Python](https://www.python.org/downloads/) نصب کن. اگر Git نصب نباشد، macOS هنگام اولین اجرای دستور `git` ممکن است نصب Xcode Command Line Tools را پیشنهاد دهد.
+**macOS:** Python نسخهٔ ۳.۱۱ تا ۳.۱۵ را از [وب‌سایت رسمی Python](https://www.python.org/downloads/) نصب کن. اگر Git نصب نباشد، macOS هنگام اولین اجرای دستور `git` ممکن است نصب Xcode Command Line Tools را پیشنهاد دهد.
 
 ### ۳. دریافت سورس پروژه
 
@@ -114,7 +114,7 @@ python -m pip install -r requirements.txt
 py -0p
 ```
 
-در مثال زیر، اگر Python نسخهٔ ۳.۱۲ را نصب نداری، شمارهٔ نسخه را با یکی از نسخه‌های نصب‌شده بین ۳.۱۱ تا ۳.۱۴ جایگزین کن:
+در مثال زیر، اگر Python نسخهٔ ۳.۱۲ را نصب نداری، شمارهٔ نسخه را با یکی از نسخه‌های نصب‌شده بین ۳.۱۱ تا ۳.۱۵ جایگزین کن:
 
 ```powershell
 py -3.12 -m venv venv
@@ -156,11 +156,12 @@ Copy-Item .env.example .env
 BOT_TOKEN=توکن_واقعی_دریافت_شده_از_BotFather
 DEFAULT_LANGUAGE=fa
 ENABLE_AUTHORIZED_AUDIO_DELIVERY=false
+AUDIO_DELIVERY_PERMISSIONS_ACK=false
 ```
 
 - مقدار `BOT_TOKEN` را با توکن واقعی خودت جایگزین کن.
 - برای زبان فارسی مقدار `fa` و برای انگلیسی مقدار `en` را قرار بده.
-- مقدار `ENABLE_AUTHORIZED_AUDIO_DELIVERY` را روی `false` نگه دار.
+- هر دو متغیر مربوط به ارسال صوتی را روی `false` نگه دار.
 
 فایل `.env` شامل اطلاعات محرمانه است و نباید آن را برای کسی بفرستی یا در GitHub منتشر کنی. این فایل در `.gitignore` قرار دارد و به‌صورت عادی وارد commit نمی‌شود.
 
@@ -217,7 +218,7 @@ https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh
 
 ### دربارهٔ ارسال فایل صوتی
 
-قابلیت قدیمی ارسال فایل صوتی به‌صورت پیش‌فرض غیرفعال است. صرفاً برای دانلود آهنگ از لینک Spotify این گزینه را فعال نکن. استفاده از آن نیازمند مجوزهای کتبی پلتفرم‌ها و مجوز صاحبان حقوق محتوا برای همان کاربرد مشخص است. تغییر مقدار این متغیر به `true` به‌تنهایی مجوز ایجاد نمی‌کند. قبل از هر تغییری [سند انطباق پروژه](COMPLIANCE.md) را بخوان.
+قابلیت قدیمی ارسال فایل صوتی به‌صورت پیش‌فرض غیرفعال است. صرفاً برای دانلود آهنگ از لینک Spotify این گزینه را فعال نکن. استفاده از آن نیازمند مجوزهای کتبی پلتفرم‌ها و مجوز صاحبان حقوق محتوا برای همان کاربرد مشخص است. برای فعال‌سازی هر دو متغیر `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` و `AUDIO_DELIVERY_PERMISSIONS_ACK=true` لازم‌اند؛ این تأیید مجوز ایجاد نمی‌کند. [سند انطباق](COMPLIANCE.md) و [راهنمای عملیاتی ارسال صوتی](AUDIO_DELIVERY.md) را بخوان.
 
 ---
 
@@ -226,7 +227,7 @@ https://open.spotify.com/track/4iV5W9uYEdYUVa79Axb7Rh
 اگر می‌خواهی ربات پس از بستن SSH هم به کار خود ادامه دهد، از نصب‌کنندهٔ systemd پروژه استفاده کن:
 
 - سیستم‌عامل پیشنهادی: Ubuntu 24.04.
-- در Ubuntu 22.04 باید Python نسخهٔ ۳.۱۱ تا ۳.۱۴ را جداگانه نصب و با `PYTHON_BIN` معرفی کنی.
+- در Ubuntu 22.04 باید Python نسخهٔ ۳.۱۱ تا ۳.۱۵ را جداگانه نصب و با `PYTHON_BIN` معرفی کنی.
 - نصب‌کننده یک کاربر مستقل به نام `spotifybot` و سرویس `spotify-bot` می‌سازد.
 - در نصب اول توکن را از تو می‌پرسد و هنگام به‌روزرسانی، فایل تنظیمات موجود را حفظ می‌کند.
 
@@ -255,7 +256,7 @@ python -m pip install -r requirements.txt
 
 ### نسخهٔ Python پشتیبانی نمی‌شود
 
-نسخه باید بین ۳.۱۱ تا ۳.۱۴ باشد. نسخهٔ فعال را بررسی کن:
+نسخه باید بین ۳.۱۱ تا ۳.۱۵ باشد. نسخهٔ فعال را بررسی کن:
 
 ```bash
 python --version
@@ -308,7 +309,7 @@ python -m pip install -r requirements-dev.txt
 pytest -q
 ```
 
-CI پروژه علاوه بر تست‌ها، کامپایل فایل‌های Python و اعتبارسنجی اسکریپت‌های shell را روی نسخه‌های Python ۳.۱۱ تا ۳.۱۴ انجام می‌دهد.
+CI پروژه علاوه بر تست‌ها، کامپایل فایل‌های Python و اعتبارسنجی اسکریپت‌های shell را روی نسخه‌های Python ۳.۱۱ تا ۳.۱۵ انجام می‌دهد.
 
 ## پشتیبانی و مجوز
 
