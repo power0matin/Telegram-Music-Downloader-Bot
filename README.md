@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/power0matin/Telegram-Music-Downloader-Bot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/power0matin/Telegram-Music-Downloader-Bot/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/power0matin/Telegram-Music-Downloader-Bot)](https://github.com/power0matin/Telegram-Music-Downloader-Bot/releases/latest)
-[![Python](https://img.shields.io/badge/Python-3.11--3.14-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.11--3.15-blue)](https://www.python.org/)
 [![License](https://img.shields.io/github/license/power0matin/Telegram-Music-Downloader-Bot)](LICENSE)
 
 A Telegram bot that recognizes Spotify track, album, and playlist links, shows a limited metadata preview when Spotify makes it available, and gives the user a direct link to open the content on Spotify.
@@ -50,7 +50,7 @@ You will add this token to the project's `.env` file in step 5.
 
 You need:
 
-- **Python 3.11, 3.12, 3.13, or 3.14**
+- **Python 3.11, 3.12, 3.13, 3.14, or 3.15**
 - **Git**
 - An internet connection
 - A Telegram account
@@ -64,11 +64,11 @@ sudo apt update
 sudo apt install -y git python3 python3-venv python3-pip
 ```
 
-Ubuntu 22.04's default Python is too old for this project. Install Python 3.11–3.14 separately before continuing.
+Ubuntu 22.04's default Python is too old for this project. Install Python 3.11–3.15 separately before continuing.
 
 **Windows:** install Python from [python.org](https://www.python.org/downloads/) and Git from [git-scm.com](https://git-scm.com/downloads). During Python setup, enable the option that adds Python to PATH.
 
-**macOS:** install Python 3.11–3.14 from [python.org](https://www.python.org/downloads/). If Git is not installed, macOS may offer to install the Xcode Command Line Tools when you first run `git`.
+**macOS:** install Python 3.11–3.15 from [python.org](https://www.python.org/downloads/). If Git is not installed, macOS may offer to install the Xcode Command Line Tools when you first run `git`.
 
 Check your Python version:
 
@@ -150,11 +150,12 @@ Open `.env` with a text editor and replace the example token:
 BOT_TOKEN=put_your_real_token_here
 DEFAULT_LANGUAGE=fa
 ENABLE_AUTHORIZED_AUDIO_DELIVERY=false
+AUDIO_DELIVERY_PERMISSIONS_ACK=false
 ```
 
 - Replace the value of `BOT_TOKEN` with the token from BotFather.
 - Set `DEFAULT_LANGUAGE` to `fa` for Persian or `en` for English.
-- Keep `ENABLE_AUTHORIZED_AUDIO_DELIVERY=false`. This is the safe default.
+- Keep both audio-delivery flags set to `false`. This is the safe default.
 
 Do not add quotes around the values unless needed, and do not share your token. The `.env` file is excluded by Git, so it should not be committed.
 
@@ -211,7 +212,7 @@ The application reads `.env` automatically at startup. After changing a setting,
 
 ### About audio delivery
 
-The optional legacy audio-delivery code is disabled by default. Do not enable it just to make the bot download songs from Spotify links. Enabling it requires written platform permissions and the appropriate rights-holder licences for the exact use. The setting itself does not grant permission. Read [docs/COMPLIANCE.md](docs/COMPLIANCE.md) before changing it.
+The optional legacy audio-delivery code is disabled by default. Do not enable it just to make the bot download songs from Spotify links. Enabling it requires written platform permissions and the appropriate rights-holder licences for the exact use. Both `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` and `AUDIO_DELIVERY_PERMISSIONS_ACK=true` are required. The acknowledgement does not grant permission. Read [docs/COMPLIANCE.md](docs/COMPLIANCE.md) and [the audio-delivery operations guide](docs/AUDIO_DELIVERY.md).
 
 ---
 
@@ -220,11 +221,11 @@ The optional legacy audio-delivery code is disabled by default. Do not enable it
 For a server that should keep running after you close your SSH session, use the supplied systemd installer:
 
 - Recommended: Ubuntu 24.04.
-- Ubuntu 22.04 needs a separately installed Python 3.11–3.14 runtime selected with `PYTHON_BIN`.
+- Ubuntu 22.04 needs a separately installed Python 3.11–3.15 runtime selected with `PYTHON_BIN`.
 - The installer creates a dedicated `spotifybot` user and a `spotify-bot` systemd service.
 - It asks for the Telegram token on a first-time install and preserves an existing `.env` during upgrades.
 
-Read [the VPS and setup guide](docs/SETUP_INSTRUCTIONS.md) before running the installer. It updates Ubuntu packages as part of installation, so use it on a server where you are comfortable applying those updates.
+Read [the VPS and setup guide](docs/SETUP_INSTRUCTIONS.md) before running the installer. It installs the required Ubuntu packages but does not run a system-wide `apt-get upgrade`.
 
 The repository does not currently provide an official Docker image or Docker Compose deployment.
 
@@ -249,7 +250,7 @@ python -m pip install -r requirements.txt
 
 ### Python version is unsupported
 
-Use Python 3.11–3.14. Check the active interpreter with:
+Use Python 3.11–3.15. Check the active interpreter with:
 
 ```bash
 python --version
@@ -305,7 +306,7 @@ python -m pip install -r requirements-dev.txt
 pytest -q
 ```
 
-The CI workflow also compiles the Python sources and checks the shell scripts on Python 3.11–3.14.
+The CI workflow also compiles the Python sources and checks the shell scripts on Python 3.11–3.15.
 
 ## Support and license
 
