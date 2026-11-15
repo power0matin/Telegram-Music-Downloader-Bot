@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 from enum import Enum
@@ -106,11 +107,28 @@ class SpotifyDownloader:
         logger.debug("Dependency check: %s", dependencies)
         return dependencies
 
+    @staticmethod
+    def _get_spotdl_executable() -> Optional[str]:
+        """Resolve spotDL from an explicit path, the active venv, or PATH."""
+        configured = os.getenv("SPOTDL_EXECUTABLE", "").strip()
+        if configured:
+            return str(Path(configured).expanduser())
+        names = ("spotdl.exe", "spotdl") if os.name == "nt" else ("spotdl",)
+        environment_bin = Path(sys.executable).resolve().parent
+        for name in names:
+            candidate = environment_bin / name
+            if candidate.is_file() and (os.name == "nt" or os.access(candidate, os.X_OK)):
+                return str(candidate)
+        return shutil.which("spotdl")
+
     def _is_spotdl_installed(self) -> bool:
-        """Check if spotdl is installed."""
+        """Check whether the spotDL CLI for this runtime is installed."""
+        executable = self._get_spotdl_executable()
+        if not executable:
+            return False
         try:
             result = subprocess.run(
-                ["spotdl", "--version"],
+                [executable, "--version"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 timeout=10,
@@ -182,7 +200,7 @@ class SpotifyDownloader:
         # --audio accepts a variable number of provider values and would
         # otherwise consume a trailing URL.
         command = [
-            "spotdl",
+            self._get_spotdl_executable() or "spotdl",
             "download",
             spotify_url,
             "--bitrate",
