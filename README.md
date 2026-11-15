@@ -1,35 +1,42 @@
-# Spotify Link Preview Bot
+# Spotify Link Preview & Optional Audio Delivery Bot
 
 [![CI](https://github.com/power0matin/Telegram-Music-Downloader-Bot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/power0matin/Telegram-Music-Downloader-Bot/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/power0matin/Telegram-Music-Downloader-Bot)](https://github.com/power0matin/Telegram-Music-Downloader-Bot/releases/latest)
 [![Python](https://img.shields.io/badge/Python-3.11--3.15-blue)](https://www.python.org/)
 [![License](https://img.shields.io/github/license/power0matin/Telegram-Music-Downloader-Bot)](LICENSE)
 
-A Telegram bot that recognizes Spotify track, album, and playlist links, shows a limited metadata preview when Spotify makes it available, and gives the user a direct link to open the content on Spotify.
+A Telegram bot that recognizes Spotify track, album, and playlist links. Its default mode shows a best-effort metadata preview and a direct Spotify link. The codebase also includes an optional, permission-gated audio-delivery workflow.
 
-**Important:** the default mode is preview-only. It does not download music or send audio files to Telegram.
+**Default behavior:** preview-only. The bot does not search audio providers, download music, or send audio files in this mode. The optional workflow is not a direct Spotify audio download: it uses spotDL to attempt to find matching recordings on configured third-party providers. Matches and provider availability are not guaranteed.
 
 **Read this in Persian:** [راهنمای فارسی](docs/README.fa.md) · **Need installation help?** [Step-by-step setup guide](docs/SETUP_INSTRUCTIONS.md)
 
 ---
 
-## What the bot does
+## Default behavior
 
-- Recognizes Spotify links to tracks, albums, and playlists.
-- Validates and cleans supported Spotify URLs.
-- Tries to retrieve limited title and creator information from Spotify's official oEmbed endpoint.
-- Shows a direct link to the matching Spotify page.
-- Supports English and Persian bot messages.
-- Includes rate limiting and error handling.
+- Recognizes Spotify track, album, and playlist links.
+- Validates and normalizes supported Spotify URLs.
+- Requests limited metadata from Spotify's official oEmbed endpoint when available.
+- Shows a direct link to the Spotify item.
+- Supports English and Persian messages, rate limiting, and error handling.
+- Does not search third-party audio providers, download audio, or upload audio files to Telegram.
+- Does not scrape Spotify embed pages when oEmbed has no metadata.
 
-## What it does not do by default
+When Spotify does not return preview information, the bot can still provide the Spotify link.
 
-- It does not download audio.
-- It does not search YouTube, SoundCloud, or other services for matching copies.
-- It does not send MP3 files to Telegram.
-- It does not scrape Spotify embed pages when the oEmbed endpoint has no metadata.
+## Optional audio-file delivery
 
-When Spotify does not return preview information, the bot can still provide the Spotify link. See [the compliance notes](docs/COMPLIANCE.md) for the reason the audio-delivery path is disabled.
+The audio-delivery workflow is implemented but **disabled by default**. When it is explicitly enabled by an operator who has the required written permissions and licences for the exact workflow:
+
+1. The user sends a supported Spotify track, album, or playlist link.
+2. The bot displays available metadata and 128/320 kbps quality choices.
+3. spotDL 4.6.0 attempts to find matching audio using the providers listed in AUDIO_PROVIDERS (the sample configuration uses SoundCloud, YouTube Music, and YouTube).
+4. The bot validates the resulting local audio files and sends eligible files through Telegram send_audio.
+
+This is not a download from Spotify's audio service. A provider may return no match, a different recording/master, or a partial album/playlist; uploads can also be skipped when a file exceeds the 49,000,000-byte safety limit. Technical availability does not establish permission to download or redistribute content.
+
+To enable this path, both ENABLE_AUTHORIZED_AUDIO_DELIVERY=true and AUDIO_DELIVERY_PERMISSIONS_ACK=true are required. The second flag is only an operator acknowledgement; it grants no permission. Read [COMPLIANCE.md](docs/COMPLIANCE.md) and the [audio-delivery operations guide](docs/AUDIO_DELIVERY.md) before changing either value.
 
 ---
 
@@ -76,7 +83,7 @@ Check your Python version:
 python --version
 ```
 
-On some Linux/macOS systems, use `python3 --version`. The version must be between 3.11 and 3.14.
+On some Linux/macOS systems, use `python3 --version`. The version must be between 3.11 and 3.15.
 
 ### 3. Download the project
 
@@ -108,7 +115,7 @@ First, list the Python versions installed on your computer:
 py -0p
 ```
 
-In the example below, replace `3.12` with a Python version between 3.11 and 3.14 that is installed on your computer:
+In the example below, replace `3.12` with a Python version between 3.11 and 3.15 that is installed on your computer:
 
 ```powershell
 py -3.12 -m venv venv
