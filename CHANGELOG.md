@@ -14,6 +14,8 @@ All notable user-facing and operational changes are documented here.
 - Updated GitHub Actions to Node.js 24-compatible action major versions.
 - Updated the minimum pyTelegramBotAPI version to 4.37.1.
 - Updated the VPS installer to avoid a system-wide package upgrade and expose venv executables to systemd.
+- Clarified in both READMEs and setup guides that audio delivery is implemented but disabled by default, uses spotDL providers rather than Spotify audio, and requires both operator flags.
+- Updated current setup and CI documentation to reflect Python 3.11–3.15 support.
 
 ### Fixed
 - Fixed systemd deployments where spotDL was installed in the virtual environment but unavailable through the service PATH.

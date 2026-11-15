@@ -2,7 +2,9 @@
 
 **Default state: disabled.** The bot normally previews Spotify links and does not search for, download, or deliver audio.
 
-This optional legacy path is only for deployments that already hold written platform permissions and rights-holder licences for the exact workflow. It is not a way to bypass DRM or provider restrictions.
+The optional workflow is implemented in the repository: it passes a validated Spotify URL to spotDL, attempts to resolve matching recordings through the configured `AUDIO_PROVIDERS`, processes the resulting local audio files, and uploads eligible files with Telegram `send_audio`. It does **not** download audio from Spotify's audio service. Provider matches may be unavailable, may represent a different recording/master, and album or playlist delivery may be partial.
+
+This workflow is only for deployments that already hold written platform permissions and rights-holder licences for the exact use. It is not a way to bypass DRM or provider restrictions.
 
 ## Authorization
 
