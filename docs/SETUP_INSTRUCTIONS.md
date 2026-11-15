@@ -2,7 +2,7 @@
 
 This guide explains how to run the bot on your own computer and how to keep it running on an Ubuntu VPS.
 
-> **What this project currently does:** by default, it previews limited Spotify information and provides a link to Spotify. It does not download or send audio files. Read [COMPLIANCE.md](COMPLIANCE.md) before changing the optional audio-delivery setting.
+> **Default mode:** Spotify metadata preview and a direct Spotify link only. The repository also contains an optional audio-delivery workflow, disabled by default. It attempts to resolve matching audio through configured spotDL providers; it is not a download from Spotify's audio service. Read [COMPLIANCE.md](COMPLIANCE.md) and [AUDIO_DELIVERY.md](AUDIO_DELIVERY.md) before enabling it.
 
 For a shorter overview, see the [main README](../README.md). The [Persian guide](README.fa.md) is also available.
 
@@ -165,7 +165,16 @@ The complete example is in [`.env.example`](../.env.example). Common settings:
 | --- | --- | --- |
 | `BOT_TOKEN` | Required Telegram bot token. | — |
 | `DEFAULT_LANGUAGE` | Bot message language: `en` or `fa`. | `en` in code; `fa` in the sample file |
-| `ENABLE_AUTHORIZED_AUDIO_DELIVERY` | Gate for the optional audio-delivery path. Keep disabled unless all required permissions and licences are in place. | `false` |
+| `ENABLE_AUTHORIZED_AUDIO_DELIVERY` | Enables the optional spotDL audio workflow. | `false` |
+| `AUDIO_DELIVERY_PERMISSIONS_ACK` | Required operator acknowledgement when audio delivery is enabled; it does not grant permission. | `false` |
+| `AUDIO_PROVIDERS` | Ordered providers spotDL may search when the optional workflow is enabled. | `soundcloud,youtube-music,youtube` |
+| `DEFAULT_QUALITY` | Default bitrate for the optional audio workflow. | `320` |
+| `MAX_DOWNLOAD_SIZE_MB` | Configured size ceiling; actual upload check is capped at 49,000,000 bytes. | `50` |
+| `DOWNLOAD_TIMEOUT_SECONDS` | spotDL download timeout. | `900` |
+| `UPLOAD_TIMEOUT_SECONDS` | Telegram audio upload timeout. | `180` |
+| `UPLOAD_RETRIES` | Maximum upload attempts. | `3` |
+| `MAX_CONCURRENT_DOWNLOADS` | Maximum concurrent audio workers. | `3` |
+| `SPOTDL_EXECUTABLE` | Optional explicit path to spotDL; otherwise the active venv and then `PATH` are checked. | automatic |
 | `RATE_LIMIT_REQUESTS` | Allowed requests within the rate-limit window. | `20` |
 | `RATE_LIMIT_WINDOW_SECONDS` | Rate-limit window length, in seconds. | `60` |
 | `LOG_LEVEL` | Log detail: `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`. | `INFO` |
@@ -174,7 +183,9 @@ Other settings in `.env.example` are mainly for the optional audio-delivery path
 
 ### Audio-delivery setting
 
-Do not set `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` just to try to download songs from Spotify links. This setting is only a technical gate; it does not grant Spotify, provider, or copyright permissions. The exact intended workflow must be covered by written platform permissions and rights-holder licences. Read [COMPLIANCE.md](COMPLIANCE.md) and [AUDIO_DELIVERY.md](AUDIO_DELIVERY.md) before changing either flag.
+The optional workflow is implemented, but it does not download audio from Spotify itself. After both gates are enabled, the bot gives the user 128/320 kbps choices, passes the Spotify URL to spotDL, tries the providers in `AUDIO_PROVIDERS`, validates the local audio outputs, and sends eligible files through Telegram `send_audio`. Provider matching can fail or return a different recording; an album or playlist may be only partially delivered. Files above the 49,000,000-byte safety ceiling are not uploaded.
+
+Do not set `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` just to download songs from Spotify links. Both `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` and `AUDIO_DELIVERY_PERMISSIONS_ACK=true` are technically required, but these flags do not grant Spotify, provider, or copyright permissions. The exact workflow must already be covered by written platform permissions and rights-holder licences. Read [COMPLIANCE.md](COMPLIANCE.md) and [AUDIO_DELIVERY.md](AUDIO_DELIVERY.md) before changing either flag.
 
 ---
 
@@ -301,7 +312,7 @@ Spotify's oEmbed metadata is best-effort. Some links do not return preview infor
 
 ### Audio is not sent
 
-This is expected in the default configuration. The bot is a Spotify link-preview bot by default, not an audio downloader. Do not enable audio delivery without the permissions described in [COMPLIANCE.md](COMPLIANCE.md).
+This is expected in the default configuration. Audio delivery is an optional, permission-gated workflow. Check that both required flags are enabled only when the exact workflow is covered by the permissions and licences described in [COMPLIANCE.md](COMPLIANCE.md), then review the service logs and [AUDIO_DELIVERY.md](AUDIO_DELIVERY.md). CI does not test live provider access or live Telegram media uploads.
 
 ---
 
@@ -319,7 +330,7 @@ Run the test suite:
 pytest -q
 ```
 
-The CI workflow also compiles the Python sources and validates shell scripts on Python 3.11, 3.12, 3.13, and 3.14.
+The CI workflow also compiles the Python sources and validates shell scripts on Python 3.11, 3.12, 3.13, 3.14, and 3.15.
 
 ## Security reminders
 
@@ -334,6 +345,7 @@ The CI workflow also compiles the Python sources and validates shell scripts on 
 - [Main README](../README.md)
 - [Persian README](README.fa.md)
 - [Changelog](../CHANGELOG.md)
+- [Audio-delivery operations guide](AUDIO_DELIVERY.md)
 - [Compliance notes](COMPLIANCE.md)
 - [Example environment configuration](../.env.example)
 - [VPS installer](../setup_vps.sh)
