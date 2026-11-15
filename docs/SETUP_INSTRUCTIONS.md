@@ -12,7 +12,7 @@ For a shorter overview, see the [main README](../README.md). The [Persian guide]
 
 For a local installation:
 
-- Python **3.11–3.14**
+- Python **3.11–3.15**
 - Git
 - Internet access
 - A Telegram account
@@ -26,11 +26,11 @@ sudo apt update
 sudo apt install -y git python3 python3-venv python3-pip
 ```
 
-Ubuntu 22.04 ships an older default Python. Install Python 3.11–3.14 separately before following the local setup steps.
+Ubuntu 22.04 ships an older default Python. Install Python 3.11–3.15 separately before following the local setup steps.
 
 On **Windows**, install [Python](https://www.python.org/downloads/) and [Git](https://git-scm.com/downloads). During Python setup, enable the option that adds Python to PATH.
 
-On **macOS**, install Python 3.11–3.14 from [python.org](https://www.python.org/downloads/). Install Git using the Xcode Command Line Tools if it is not already available.
+On **macOS**, install Python 3.11–3.15 from [python.org](https://www.python.org/downloads/). Install Git using the Xcode Command Line Tools if it is not already available.
 
 For a VPS installation, use Ubuntu 24.04 where possible. Ubuntu 22.04 needs a separately installed compatible Python runtime; details are in the VPS section below.
 
@@ -74,7 +74,7 @@ List the Python versions available on your computer:
 py -0p
 ```
 
-Choose one installed version between 3.11 and 3.14. The example uses 3.12; change it if your installed version is different.
+Choose one installed version between 3.11 and 3.15. The example uses 3.12; change it if your installed version is different.
 
 ```powershell
 py -3.12 -m venv venv
@@ -118,11 +118,12 @@ Open `.env` in a text editor. Set at least the following values:
 BOT_TOKEN=your_real_token_from_BotFather
 DEFAULT_LANGUAGE=fa
 ENABLE_AUTHORIZED_AUDIO_DELIVERY=false
+AUDIO_DELIVERY_PERMISSIONS_ACK=false
 ```
 
 - Replace the example value of `BOT_TOKEN` with your real token.
 - Use `fa` for Persian messages or `en` for English messages.
-- Leave `ENABLE_AUTHORIZED_AUDIO_DELIVERY=false` for ordinary use.
+- Leave both audio-delivery flags set to `false` for ordinary use.
 
 The application loads `.env` automatically; you do not need to run `export` when you use this file. The repository's `.gitignore` excludes `.env`, but still do not share it or commit it.
 
@@ -173,7 +174,7 @@ Other settings in `.env.example` are mainly for the optional audio-delivery path
 
 ### Audio-delivery setting
 
-Do not set `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` just to try to download songs from Spotify links. This setting is only a technical gate; it does not grant Spotify, provider, or copyright permissions. The exact intended workflow must be covered by written platform permissions and rights-holder licences. Read [COMPLIANCE.md](COMPLIANCE.md) before making any change.
+Do not set `ENABLE_AUTHORIZED_AUDIO_DELIVERY=true` just to try to download songs from Spotify links. This setting is only a technical gate; it does not grant Spotify, provider, or copyright permissions. The exact intended workflow must be covered by written platform permissions and rights-holder licences. Read [COMPLIANCE.md](COMPLIANCE.md) and [AUDIO_DELIVERY.md](AUDIO_DELIVERY.md) before changing either flag.
 
 ---
 
@@ -184,12 +185,12 @@ The repository includes `setup_vps.sh`, which installs the bot as a systemd serv
 ### Supported setup
 
 - **Ubuntu 24.04:** recommended; the installer uses the system Python 3.12.
-- **Ubuntu 22.04:** install Python 3.11–3.14 separately, including its venv support, and select it with `PYTHON_BIN`.
+- **Ubuntu 22.04:** install Python 3.11–3.15 separately, including its venv support, and select it with `PYTHON_BIN`.
 - Other operating systems are not supported by this automated installer.
 
 ### Before running the installer
 
-The script performs system package updates and an `apt-get upgrade`, installs system dependencies, creates a service user, downloads the repository into `/opt/Telegram-Music-Downloader-Bot`, creates a virtual environment, and configures systemd.
+The script refreshes the apt package index, installs required dependencies, creates a service user, downloads the repository, creates a virtual environment, and configures systemd. It does not run a system-wide `apt-get upgrade`.
 
 Run it on a server where you have reviewed and are comfortable applying Ubuntu package upgrades. On a production server, take a backup and schedule a maintenance window first.
 
@@ -208,7 +209,7 @@ On a first-time installation, the script asks for your Telegram bot token withou
 
 ### Ubuntu 22.04
 
-The system Python on Ubuntu 22.04 is too old for this project. Install a supported Python runtime (3.11–3.14) and its venv package first. Then run the installer with the exact interpreter name, for example:
+The system Python on Ubuntu 22.04 is too old for this project. Install a supported Python runtime (3.11–3.15) and its venv package first. Then run the installer with the exact interpreter name, for example:
 
 ```bash
 sudo PYTHON_BIN=python3.11 ./setup_vps.sh
@@ -285,7 +286,7 @@ python --version
 
 ### Unsupported Python version
 
-Use Python 3.11–3.14. If the existing virtual environment was created with another version, remove the `venv` folder and recreate it with a supported interpreter.
+Use Python 3.11–3.15. If the existing virtual environment was created with another version, remove the `venv` folder and recreate it with a supported interpreter.
 
 ### No preview title is shown
 
