@@ -13,6 +13,8 @@ Restart=always
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1
 Environment=HOME=/opt/Telegram-Music-Downloader-Bot/runtime
+Environment="PATH=/opt/Telegram-Music-Downloader-Bot/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+UMask=0077
 
 NoNewPrivileges=true
 ProtectSystem=strict
