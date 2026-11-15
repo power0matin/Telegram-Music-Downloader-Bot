@@ -2,7 +2,7 @@
 pyTelegramBotAPI>=4.37.1,<5.0.0
 
 # HTTP requests for metadata extraction
-requests>=2.32.3,<3.0.0
+requests>=2.34.2,<3.0.0
 
 # Environment variable management
 python-dotenv>=1.0.0,<2.0.0
