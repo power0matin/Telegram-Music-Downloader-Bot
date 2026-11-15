@@ -2,6 +2,24 @@
 
 All notable user-facing and operational changes are documented here.
 
+## [Unreleased]
+
+### Added
+- Added a second operator acknowledgement for optional audio delivery; both switches remain disabled by default.
+- Added spotDL executable resolution from the active Python virtual environment.
+- Added Python 3.15 to the CI matrix and regression tests for the runtime path and authorization gate.
+- Added an audio-delivery operations guide and weekly Dependabot updates.
+
+### Changed
+- Updated GitHub Actions to Node.js 24-compatible action major versions.
+- Updated the minimum pyTelegramBotAPI version to 4.37.1.
+- Updated the VPS installer to avoid a system-wide package upgrade and expose venv executables to systemd.
+
+### Fixed
+- Fixed systemd deployments where spotDL was installed in the virtual environment but unavailable through the service PATH.
+
+---
+
 ## [1.2.0] - 2026-11-08
 
 ### Added
