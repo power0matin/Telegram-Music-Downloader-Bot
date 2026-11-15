@@ -1,3 +1,5 @@
+import pytest
+
 from config import Config, TELEGRAM_AUDIO_SAFE_MAX_BYTES
 
 
@@ -47,7 +49,5 @@ def test_authorized_audio_delivery_requires_explicit_boolean_value(
     assert enabled.audio_delivery_permissions_acknowledged is True
 
     monkeypatch.setenv("ENABLE_AUTHORIZED_AUDIO_DELIVERY", "not-a-boolean")
-    import pytest
-
     with pytest.raises(RuntimeError, match="ENABLE_AUTHORIZED_AUDIO_DELIVERY"):
         Config.from_env()
