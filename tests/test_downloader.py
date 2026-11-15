@@ -20,7 +20,8 @@ def test_spotdl_command_matches_46_cli(tmp_path):
         SPOTIFY_URL, str(tmp_path), quality=320
     )
 
-    assert command[:3] == ["spotdl", "download", SPOTIFY_URL]
+    assert Path(command[0]).name in {"spotdl", "spotdl.exe"}
+    assert command[1:3] == ["download", SPOTIFY_URL]
     assert "--audio" in command
     assert "--audio-providers" not in command
     audio_index = command.index("--audio")
@@ -549,3 +550,21 @@ def test_telegram_retry_after_is_treated_as_transient():
 
     assert downloader_module._is_retryable_upload_error(error)
     assert downloader_module._upload_retry_delay(error, attempt=1) == 8
+
+
+def test_spotdl_executable_prefers_active_python_environment(monkeypatch, tmp_path):
+    bin_dir = tmp_path / "venv" / "bin"
+    bin_dir.mkdir(parents=True)
+    spotdl = bin_dir / "spotdl"
+    spotdl.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    spotdl.chmod(0o755)
+    monkeypatch.setattr(downloader_module.sys, "executable", str(bin_dir / "python"))
+    monkeypatch.setattr(downloader_module.shutil, "which", lambda _name: "/usr/bin/spotdl")
+    monkeypatch.delenv("SPOTDL_EXECUTABLE", raising=False)
+    assert SpotifyDownloader._get_spotdl_executable() == str(spotdl)
+
+
+def test_spotdl_executable_honours_explicit_override(monkeypatch, tmp_path):
+    configured = tmp_path / "custom" / "spotdl"
+    monkeypatch.setenv("SPOTDL_EXECUTABLE", str(configured))
+    assert SpotifyDownloader._get_spotdl_executable() == str(configured)
